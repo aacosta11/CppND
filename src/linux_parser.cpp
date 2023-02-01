@@ -13,7 +13,7 @@ using std::istringstream;
 using std::to_string;
 using std::vector;
 
-// Find the Operating System
+// Find the Operating System //
 string LinuxParser::OperatingSystem() {
   string line;
   string key;
@@ -36,7 +36,7 @@ string LinuxParser::OperatingSystem() {
   return value;
 }
 
-// Find the Kernel Identifier
+// Find the Kernel Identifier //
 string LinuxParser::Kernel() {
   string os, version, kernel;
   string line;
@@ -72,10 +72,12 @@ vector<int> LinuxParser::Pids() {
 // TODO: Read and return the system memory utilization
 float LinuxParser::MemoryUtilization() { return 0.0; }
 
-// TODO: Read and return the system uptime
+// Read and return the system uptime //
 long LinuxParser::UpTime() { 
   string uptime, idle, line;
   ifstream filestream(kProcDirectory + kUptimeFilename);
+  
+  if (!filestream.is_open()) { return 0; }
   std::getline(filestream, line);
   istringstream ss(line);
   ss >> uptime >> idle;
@@ -98,11 +100,39 @@ long LinuxParser::IdleJiffies() { return 0; }
 // TODO: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() { return {}; }
 
-// TODO: Read and return the total number of processes
-int LinuxParser::TotalProcesses() { return 0; }
+// Read and return the total number of processes //
+int LinuxParser::TotalProcesses() { 
+  string key, value, line;
+  ifstream filestream(kProcDirectory + kStatFilename);
 
-// TODO: Read and return the number of running processes
-int LinuxParser::RunningProcesses() { return 0; }
+  if (!filestream.is_open()) { return 0; }
+  while (std::getline(filestream, line)) {
+    istringstream ss(line);
+    while (ss >> key >> value) {
+      if (key == "processes") {
+        return stoi(value);
+      }
+    }
+  }
+  return 0;  
+}
+
+// Read and return the number of running processes //
+int LinuxParser::RunningProcesses() { 
+  string key, value, line;
+  ifstream filestream(kProcDirectory + kStatFilename);
+
+  if (!filestream.is_open()) { return 0; }
+  while (std::getline(filestream, line)) {
+    istringstream ss(line);
+    while (ss >> key >> value) {
+      if (key == "procs_running") {
+        return stoi(value);
+      }
+    }
+  }
+  return 0;
+}
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function

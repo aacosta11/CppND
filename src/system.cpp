@@ -29,11 +29,11 @@ int System::RunningProcesses() { return LinuxParser::RunningProcesses(); }
 // Return the total number of processes on the system //
 int System::TotalProcesses() { return LinuxParser::TotalProcesses(); }
 
+// Return the system's memory utilization //
+float System::MemoryUtilization() { return LinuxParser::MemoryUtilization(); }
+
 // TODO: Return the system's CPU
 Processor& System::Cpu() { return cpu_; }
 
 // TODO: Return a container composed of the system's processes
 vector<Process>& System::Processes() { return processes_; }
-
-// TODO: Return the system's memory utilization
-float System::MemoryUtilization() { return 0.0; }

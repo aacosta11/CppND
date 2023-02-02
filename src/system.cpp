@@ -36,4 +36,13 @@ float System::MemoryUtilization() { return LinuxParser::MemoryUtilization(); }
 Processor& System::Cpu() { return cpu_; }
 
 // TODO: Return a container composed of the system's processes
-vector<Process>& System::Processes() { return processes_; }
+vector<Process>& System::Processes() { 
+    vector<int> pids = LinuxParser::Pids();
+    processes_.clear();
+    for (int pid : pids) {
+        Process process(pid);
+        processes_.push_back(process);
+    }
+    sort(processes_.begin(), processes_.end(), [](Process a, Process b) { return a < b; });
+    return processes_; 
+}

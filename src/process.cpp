@@ -17,13 +17,12 @@ Process::Process(int pid) {
     uptime_ = LinuxParser::UpTime(pid);
     command_ = LinuxParser::Command(pid);
     ram_ = LinuxParser::Ram(pid);
-    // cpu util
+    cpu_utilization_ = LinuxParser::CpuUtilization(pid);
 }
 
 int Process::Pid() { return pid_; }
 
-// TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+float Process::CpuUtilization() { return cpu_utilization_; }
 
 string Process::Command() { return command_; }
 
@@ -35,5 +34,5 @@ long int Process::UpTime() { return uptime_; }
 
 // overload (less than)
 bool Process::operator<(Process const& a) const { 
-    return this->pid_ > a.pid_;
+    return stoi(this->ram_) > stoi(a.ram_);
 }

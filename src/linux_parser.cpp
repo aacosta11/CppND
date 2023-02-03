@@ -196,6 +196,54 @@ string LinuxParser::Ram(int pid) {
   return string();
 }
 
+// Read and return the uptime of a process //
+long LinuxParser::UpTime(int pid) {
+  // access the 22nd entry
+  string starttime, line;
+  ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
+  if (!filestream.is_open()) { return 0; }
+
+  getline(filestream, line);
+  istringstream ss(line);
+  for (int i = 0; i < 22; i ++) {
+    ss >> starttime;
+  }
+  return LinuxParser::UpTime() - (stol(starttime) / sysconf(_SC_CLK_TCK)); 
+}
+
+// Return the cpu utilization for a process //
+float LinuxParser::CpuUtilization(int pid) {
+  // /proc/uptime:
+  // uptime
+  // /proc/[PID]/stat:
+  // utime (14)
+  // stime (15)
+  // cutime (16)
+  // sctime (17)
+  // starttime (22)
+
+  // total_time = utime + stime + cutime + cstime;
+  // seconds = uptime - (starttime / sysconf(_SC_CLK_TCK));
+  // cpu_usage = total_time / sysconf(_SC_CLK_TCK) / seconds;
+  
+  string utime, stime, cutime, sctime, line;
+  ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
+  if (!filestream.is_open()) { return 0; }
+
+  getline(filestream, line);
+  istringstream ss(line);
+
+  for (int i = 0; i < 14; i ++) {
+    ss >> utime;
+  }
+  ss >> stime >> cutime >> sctime;
+
+  float total_time = stol(utime) + stol(stime) + stol(cutime) + stol(sctime);
+  float seconds = LinuxParser::UpTime(pid);
+  float cpu_usage = total_time / sysconf(_SC_CLK_TCK) / seconds;
+  return cpu_usage;
+}
+
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
 
@@ -211,19 +259,3 @@ long LinuxParser::IdleJiffies() { return 0; }
 
 // TODO: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() { return {}; }
-
-// TODO: Read and return the uptime of a process
-long LinuxParser::UpTime(int pid) { // DOUBLE CHECK THIS ONE!!!
-  // access the 22nd entry
-  string starttime, line;
-  ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
-  if (!filestream.is_open()) { return 0; }
-
-  getline(filestream, line);
-  istringstream ss(line);
-  for (int i = 0; i < 22; i ++) {
-    ss >> starttime;
-  }
-  
-  return stol(starttime) / sysconf(_SC_CLK_TCK); 
-}

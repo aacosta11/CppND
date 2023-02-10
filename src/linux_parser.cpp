@@ -258,4 +258,15 @@ long LinuxParser::ActiveJiffies() { return 0; }
 long LinuxParser::IdleJiffies() { return 0; }
 
 // TODO: Read and return CPU utilization
-vector<string> LinuxParser::CpuUtilization() { return {}; }
+vector<string> LinuxParser::CpuUtilization() { 
+  vector<string> cpu(10, "");
+  string key, line;
+  ifstream filestream(kProcDirectory + kStatFilename);
+  if (!filestream.is_open()) { return {}; }
+
+  getline(filestream, line);
+  istringstream ss(line);
+  ss >> key >> cpu[0] >> cpu[1] >> cpu[2] >> cpu[3] >> cpu[4] >> cpu[5] >> cpu[6] >> cpu[7] >> cpu[8] >> cpu[9];
+
+  return cpu; 
+}

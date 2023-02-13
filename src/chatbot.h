@@ -3,10 +3,15 @@
 
 #include <wx/bitmap.h>
 #include <string>
+#include <iostream>
 
 class GraphNode; // forward declaration
 class ChatLogic; // forward declaration
 
+/*
+    ChatBot instances are copied with EXCLUSIVE OWNERSHIP semantics. 
+    you have been warned.
+*/
 class ChatBot
 {
 private:
@@ -23,15 +28,51 @@ private:
 
 public:
     // constructors / destructors
-    ChatBot();                     // constructor WITHOUT memory allocation
-    ChatBot(std::string filename); // constructor WITH memory allocation
+    ChatBot();
+    ChatBot(std::string filename);
     ~ChatBot();
 
-    //// STUDENT CODE
-    ////
+    // copy & move constructors
+    ChatBot(ChatBot &source);
+    ChatBot(ChatBot &&source);
 
-    ////
-    //// EOF STUDENT CODE
+    ChatBot &operator=(ChatBot &source) // copy assignment operator
+    {
+        std::cout << "(ChatBot) COPY ASSIGNEMT: " << &source << " to " << this << "\n";
+        if (this == &source) 
+            return *this;
+        // copy source handles
+        _image = source._image;
+        _currentNode = source._currentNode;
+        _rootNode = source._rootNode;
+        _chatLogic = source._chatLogic;
+        // invalidate source handles
+        source._image = NULL;
+        source._currentNode = nullptr;
+        source._rootNode = nullptr;
+        source._chatLogic = nullptr;
+        // return instance
+        return *this;
+    } // EOF copy assignemtn operator
+
+    ChatBot &operator=(ChatBot &&source) // move assignment operator
+    {
+        std::cout << "(ChatBot) MOVE ASSIGNMENT: " << &source << " to " << this << "\n";
+        if (this == &source)
+            return *this;
+        // copy source handles
+        _image = source._image;
+        _currentNode = source._currentNode;
+        _rootNode = source._rootNode;
+        _chatLogic = source._chatLogic;
+        // invalidate source handles
+        source._image = NULL;
+        source._currentNode = nullptr;
+        source._rootNode = nullptr;
+        source._chatLogic = nullptr;
+        // return instance
+        return *this;
+    } // EOF move assingment operator
 
     // getters / setters
     void SetCurrentNode(GraphNode *node);

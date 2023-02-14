@@ -41,7 +41,7 @@ ChatBot::~ChatBot() // destructor
 
 ChatBot::ChatBot(ChatBot &source) // copy constructor
 {
-    std::cout << "(ChatBot) COPY CONSTRUCTOR: " << &source << " to " << this << "\n";
+    std::cout << "ChatBot Copy Constructor: " << &source << " to " << this << "\n";
     // copy source handles
     _image = source._image;
     _currentNode = source._currentNode;
@@ -56,7 +56,7 @@ ChatBot::ChatBot(ChatBot &source) // copy constructor
 
 ChatBot::ChatBot(ChatBot &&source) // move constructor
 {
-    std::cout << "(ChatBot) MOVE CONSTRUCTOR: " << &source << " to " << this << "\n";
+    std::cout << "ChatBot Move Constructor: " << &source << " to " << this << "\n";
     // copy source handles
     _image = source._image;
     _currentNode = source._currentNode;

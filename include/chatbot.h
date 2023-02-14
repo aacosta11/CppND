@@ -38,7 +38,7 @@ public:
 
     ChatBot &operator=(ChatBot &source) // copy assignment operator
     {
-        std::cout << "(ChatBot) COPY ASSIGNEMT: " << &source << " to " << this << "\n";
+        std::cout << "ChatBot Copy Assignment: " << &source << " to " << this << "\n";
         if (this == &source) 
             return *this;
         // copy source handles
@@ -57,7 +57,7 @@ public:
 
     ChatBot &operator=(ChatBot &&source) // move assignment operator
     {
-        std::cout << "(ChatBot) MOVE ASSIGNMENT: " << &source << " to " << this << "\n";
+        std::cout << "ChatBot Move Assignment: " << &source << " to " << this << "\n";
         if (this == &source)
             return *this;
         // copy source handles

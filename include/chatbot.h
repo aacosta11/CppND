@@ -8,10 +8,6 @@
 class GraphNode; // forward declaration
 class ChatLogic; // forward declaration
 
-/*
-    ChatBot instances are copied with EXCLUSIVE OWNERSHIP semantics. 
-    you have been warned.
-*/
 class ChatBot
 {
 private:
@@ -42,7 +38,7 @@ public:
         if (this == &source) 
             return *this;
         // copy source handles
-        _image = source._image;
+        _image = new wxBitmap(*source._image);
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;
@@ -61,7 +57,7 @@ public:
         if (this == &source)
             return *this;
         // copy source handles
-        _image = source._image;
+        _image = new wxBitmap(*source._image);
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;

@@ -4,9 +4,9 @@
 #include <wx/bitmap.h>
 #include <string>
 #include <iostream>
+#include "chatlogic.h"
 
 class GraphNode; // forward declaration
-class ChatLogic; // forward declaration
 
 class ChatBot
 {
@@ -37,12 +37,11 @@ public:
         std::cout << "ChatBot Copy Assignment: " << &source << " to " << this << "\n";
         if (this == &source) 
             return *this;
-        _image = new wxBitmap();
-        *_image = *source._image;
+        _image = new wxBitmap(*source._image);
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;
-        source._image = NULL;
+        _chatLogic->SetChatbotHandle(this);
         source._currentNode = nullptr;
         source._rootNode = nullptr;
         source._chatLogic = nullptr;
@@ -54,12 +53,11 @@ public:
         std::cout << "ChatBot Move Assignment: " << &source << " to " << this << "\n";
         if (this == &source)
             return *this;
-        _image = new wxBitmap();
-        *_image = *source._image;
+        _image = new wxBitmap(*source._image);
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;
-        source._image = NULL;
+        _chatLogic->SetChatbotHandle(this);
         source._currentNode = nullptr;
         source._rootNode = nullptr;
         source._chatLogic = nullptr;

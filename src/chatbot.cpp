@@ -42,12 +42,11 @@ ChatBot::~ChatBot() // destructor
 ChatBot::ChatBot(ChatBot &source) // copy constructor
 {
     std::cout << "ChatBot Copy Constructor: " << &source << " to " << this << "\n";
-    // copy source handles
-    _image = new wxBitmap(*source._image);
+    _image = new wxBitmap();
+    *_image = *source._image;
     _currentNode = source._currentNode;
     _rootNode = source._rootNode;
     _chatLogic = source._chatLogic;
-    // invalidate source handles
     source._image = NULL;
     source._currentNode = nullptr;
     source._rootNode = nullptr;
@@ -57,12 +56,11 @@ ChatBot::ChatBot(ChatBot &source) // copy constructor
 ChatBot::ChatBot(ChatBot &&source) // move constructor
 {
     std::cout << "ChatBot Move Constructor: " << &source << " to " << this << "\n";
-    // copy source handles
-    _image = new wxBitmap(*source._image);
+    _image = new wxBitmap();
+    *_image = *source._image;
     _currentNode = source._currentNode;
     _rootNode = source._rootNode;
     _chatLogic = source._chatLogic;
-    // invalidate source handles
     source._image = NULL;
     source._currentNode = nullptr;
     source._rootNode = nullptr;

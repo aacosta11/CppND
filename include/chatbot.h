@@ -37,38 +37,34 @@ public:
         std::cout << "ChatBot Copy Assignment: " << &source << " to " << this << "\n";
         if (this == &source) 
             return *this;
-        // copy source handles
-        _image = new wxBitmap(*source._image);
+        _image = new wxBitmap();
+        *_image = *source._image;
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;
-        // invalidate source handles
         source._image = NULL;
         source._currentNode = nullptr;
         source._rootNode = nullptr;
         source._chatLogic = nullptr;
-        // return instance
         return *this;
-    } // EOF copy assignemtn operator
+    }
 
     ChatBot &operator=(ChatBot &&source) // move assignment operator
     {
         std::cout << "ChatBot Move Assignment: " << &source << " to " << this << "\n";
         if (this == &source)
             return *this;
-        // copy source handles
-        _image = new wxBitmap(*source._image);
+        _image = new wxBitmap();
+        *_image = *source._image;
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;
-        // invalidate source handles
         source._image = NULL;
         source._currentNode = nullptr;
         source._rootNode = nullptr;
         source._chatLogic = nullptr;
-        // return instance
         return *this;
-    } // EOF move assingment operator
+    }
 
     // getters / setters
     void SetCurrentNode(GraphNode *node);

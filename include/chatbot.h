@@ -53,11 +53,12 @@ public:
         std::cout << "ChatBot Move Assignment: " << &source << " to " << this << "\n";
         if (this == &source)
             return *this;
-        _image = new wxBitmap(*source._image);
+        _image = source._image;
         _currentNode = source._currentNode;
         _rootNode = source._rootNode;
         _chatLogic = source._chatLogic;
         _chatLogic->SetChatbotHandle(this);
+        source._image = NULL;
         source._currentNode = nullptr;
         source._rootNode = nullptr;
         source._chatLogic = nullptr;

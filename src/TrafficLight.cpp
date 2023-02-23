@@ -58,25 +58,25 @@ void TrafficLight::simulate()
 // virtual function which is executed in a thread
 void TrafficLight::cycleThroughPhases()
 {
-    // time start
-    auto timeStart = std::chrono::system_clock::now().time_since_epoch().count();
-    int elapsedTime;
-
-    // random numbers
+    // random number generator
     std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(4, 6);
-    int random = dist(rng);
+    std::uniform_real_distribution<double> dist(4000, 6000);
+    
+    auto lastUpdate = std::chrono::system_clock::now();
+    double fourToSixSeconds = static_cast<double>(dist(rng));
 
     while (true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        elapsedTime = (int)((std::chrono::system_clock::now().time_since_epoch().count() - timeStart) / 1000000000);
 
-        if (elapsedTime > random)
+        auto &&now = std::chrono::system_clock::now();
+        double timeSinceLastUpdate = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(now - lastUpdate).count());
+
+        if (timeSinceLastUpdate > fourToSixSeconds)
         {
             _currentPhase = _currentPhase == TrafficLightPhase::red ? TrafficLightPhase::green : TrafficLightPhase::red;
-            timeStart = std::chrono::system_clock::now().time_since_epoch().count();
-            random = dist(rng);
+            lastUpdate = now;
+            fourToSixSeconds = static_cast<double>(dist(rng));
         }
         _mq.send(std::move(_currentPhase));
     };

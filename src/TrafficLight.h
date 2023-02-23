@@ -39,13 +39,9 @@ public:
     void simulate();
 
 private:
-    // typical behaviour methods
     void cycleThroughPhases();
     TrafficLightPhase _currentPhase;
-
     MessageQueue<TrafficLightPhase> _mq;
-    std::condition_variable _condition;
-    std::mutex _mutex;
 };
 
 #endif

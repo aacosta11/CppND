@@ -86,17 +86,18 @@ bool Game::loadAssets()
     _gWindow->setWindowSize(_backdrop->getWidth(), _backdrop->getHeight());
     
     // load player texture
-    _player = std::make_unique<Player>(100, 150);
+    _player = std::make_unique<PlayableEntity>(100, 150);
     if (!_player->loadTexture(_gRenderer->getRendererHandle(), "../assets/player.png"))
         return false;
+    _player->setColliderOffset({15, 0, -30, 0});
 
     // load tree texture
-    _tree = std::make_unique<TexturedElementWithPhysics>();
+    _tree = std::make_unique<Entity>();
     if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/innocent_tree.png"))
         return false;
-    _tree->setPosX(_gWindow->getWidth() - _tree->getWidth());
-    _tree->setPosY(_gWindow->getHeight() - _tree->getHeight() - 150);
-    _tree->setColliderUpdateModifiers(150, 0, -250, 0);
+    _tree->setTextureRectX(_gWindow->getWidth() - _tree->getTextureWidth());
+    _tree->setTextureRectY(_gWindow->getHeight() - _tree->getTextureHeight() - 150);
+    _tree->setColliderOffset({ 150, 0, -300, 0 });
 
     return true;
 }
@@ -177,6 +178,16 @@ void Game::run()
         _backdrop->render(_gRenderer->getRendererHandle(), 0, 0, NULL);
         _tree->render(_gRenderer->getRendererHandle());
         _player->render(_gRenderer->getRendererHandle());
+
+        SDL_Rect player = _player->getCollider();
+        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
+
+        SDL_Rect tree = _tree->getCollider();
+        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &tree);
+
+        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &floor);
+        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &rightWall);
+        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &leftWall);
 
         // update screen
         SDL_RenderPresent(_gRenderer->getRendererHandle());

@@ -11,9 +11,8 @@
 
 #include "Window.h"
 #include "Renderer.h"
-#include "Player.h"
 #include "Texture.h"
-#include "TexturedElement.h"
+#include "Entity.h"
 #include "Timer.h"
 
 
@@ -44,8 +43,8 @@ private:
     std::unique_ptr<Window> _gWindow;
     std::unique_ptr<Renderer> _gRenderer;
     std::unique_ptr<Texture> _backdrop;
-    std::unique_ptr<Player> _player;
-    std::unique_ptr<TexturedElementWithPhysics> _tree;
+    std::unique_ptr<PlayableEntity> _player;
+    std::unique_ptr<Entity> _tree;
 };
 
 #endif

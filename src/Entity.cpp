@@ -102,21 +102,20 @@ Entity::CollisionDirection Entity::getCollisionDirection(SDL_Rect &rect)
     if (SDL_IntersectRect(&_collider, &rect, &intersection) == SDL_FALSE)
         return CollisionDirection::NONE;
 
-    struct XY { int x, y; };
-    XY TL = { _collider.x, _collider.y };
-    XY TR = { _collider.x + _collider.w, _collider.y };
-    XY BL = { _collider.x, _collider.y + _collider.h };
-    XY BR = { _collider.x + _collider.w, _collider.y + _collider.h };
+    int LEFT = _collider.x;
+    int RIGHT = _collider.x + _collider.w;
+    int TOP = _collider.y;
+    int BOTTOM = _collider.y + _collider.h;
 
-    XY TLi = { intersection.x, intersection.y };
-    XY TRi = { intersection.x + intersection.w, intersection.y };
-    XY BLi = { intersection.x, intersection.y + intersection.h };
-    XY BRi = { intersection.x + intersection.w, intersection.y + intersection.h };
+    int iLEFT = intersection.x;
+    int iRIGHT = intersection.x + intersection.w;
+    int iTOP = intersection.y;
+    int iBOTTOM = intersection.y + intersection.h;
 
-    int distanceToTop = abs(TL.y - TLi.y);
-    int distanceToBottom = abs(BL.y - BLi.y);
-    int distanceToLeft = abs(TL.x - TLi.x);
-    int distanceToRight = abs(TR.x - TRi.x);
+    int distanceToTop = abs(TOP - iTOP);
+    int distanceToBottom = abs(BOTTOM - iBOTTOM);
+    int distanceToLeft = abs(LEFT - iLEFT);
+    int distanceToRight = abs(RIGHT - iRIGHT);
 
     int minDistance = std::min({ distanceToTop, distanceToBottom, distanceToLeft, distanceToRight });
     

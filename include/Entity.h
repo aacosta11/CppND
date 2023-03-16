@@ -5,6 +5,7 @@
 #include <SDL2/SDL_image.h>
 #include <vector>
 #include <map>
+#include <algorithm>
 #include <functional>
 #include "Texture.h"
 
@@ -19,9 +20,6 @@ public:
     // RENDERING
     void render(SDL_Renderer *renderer);
     bool loadTexture(SDL_Renderer *renderer, std::string path);
-
-    // HANDLE EVENTS
-    // virtual void handleEvent(SDL_Event &e) = 0;
 
     // MOVEMENT
     void move(float timeStep, std::vector<SDL_Rect> colliders);
@@ -38,42 +36,37 @@ public:
 
     // GETTERS
     SDL_Rect getCollider();
-    float getColliderWidth();
-    float getColliderHeight();
-    float getColliderX();
-    float getColliderY();
-    SDL_Rect getTextureRect();
     float getTextureWidth();
     float getTextureHeight();
-    float getTextureRectWidth();
-    float getTextureRectHeight();
-    float getTextureRectX();
-    float getTextureRectY();
-
 
     // SETTERS
-    void setTextureRectX(int x);
-    void setTextureRectY(int y);
     void setCollider(SDL_Rect rect);
     void updateCollider();
-
-    void setColliderOffset(SDL_Rect rect);
-    void setGravity(float gravity);
-    void setFriction(float friction);
+    void setSpriteRectX(int x);
+    void setSpriteRectY(int y);
+    void setSpriteClips(SDL_Rect clips[]);
 
     // GLOBALS
     static float GRAVITY;
     static float FRICTION;
 
 protected:
-    float _health = 100.0f;
+    // float _health = 100.0f;
+    
+    // position
     struct XY { float x, y; } _vel, _acc;
-    SDL_Rect _textureRect;
+    
+    // collision
     SDL_Rect _collider;
-    SDL_Rect _colliderOffset;
+    
+    // texture
     Texture _texture;
+    SDL_Rect _spriteRect;
+    SDL_Rect* _spriteClips;
+
 
     // states
+    int _animationFrame = 1;
     bool _isAirborne = false;
     bool _leftPressed = false;
     bool _rightPressed = false;

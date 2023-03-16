@@ -1,5 +1,6 @@
 #include "Game.h"
 
+
 // CONSTRUCTORS / DESTRUCTORS
 
 Game::Game()
@@ -8,6 +9,7 @@ Game::Game()
     _gRenderer = NULL;
     _player = NULL;
     _backdrop = NULL;
+    _tree = NULL;
 }
 
 Game::~Game()
@@ -87,17 +89,20 @@ bool Game::loadAssets()
     
     // load player texture
     _player = std::make_unique<PlayableEntity>(100, 150);
-    if (!_player->loadTexture(_gRenderer->getRendererHandle(), "../assets/player.png"))
+    if (!_player->loadTexture(_gRenderer->getRendererHandle(), "../assets/player-sprites.png"))
         return false;
-    _player->setColliderOffset({15, 0, -30, 0});
+
+    // set player sprite clips
+    SDL_Rect sprites[2] = {
+        { 0, 0, 28, 80 },
+        { 28, 0, 52, 80 }
+    };
+    _player->setSpriteClips(sprites);
 
     // load tree texture
-    _tree = std::make_unique<Entity>();
+    _tree = std::make_unique<Entity>(320, -100);
     if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/innocent_tree.png"))
         return false;
-    _tree->setTextureRectX(_gWindow->getWidth() - _tree->getTextureWidth());
-    _tree->setTextureRectY(_gWindow->getHeight() - _tree->getTextureHeight() - 150);
-    _tree->setColliderOffset({ 150, 0, -300, 0 });
 
     return true;
 }
@@ -134,8 +139,8 @@ void Game::run()
 
     // world boundaries
     SDL_Rect floor = { 0, _gWindow->getHeight() - 20, _gWindow->getWidth(), 40 };
-    SDL_Rect rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() };
-    SDL_Rect leftWall = { 0, 0, 20, _gWindow->getHeight() };
+    SDL_Rect rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() - 20 };
+    SDL_Rect leftWall = { 0, 0, 20, _gWindow->getHeight() - 20 };
 
     // main loop
 
@@ -165,7 +170,7 @@ void Game::run()
 
         // update positions
         _tree->move(timeStep, { floor, rightWall, leftWall });
-        _player->move(timeStep, { floor, rightWall, leftWall, _tree->getCollider() });
+        _player->move(timeStep, { floor, rightWall, leftWall, });
 
         // restart step timer
         stepTimer.start();

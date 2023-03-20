@@ -6,8 +6,8 @@
 #include <vector>
 #include <map>
 #include <algorithm>
-#include <functional>
 #include "Texture.h"
+#include "Timer.h"
 
 class Entity
 {
@@ -22,11 +22,14 @@ public:
     bool loadTexture(SDL_Renderer *renderer, std::string path);
 
     // MOVEMENT
-    void move(float timeStep, std::vector<SDL_Rect> colliders);
+    void move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<Entity*> enemies);
 
     // COLLISION
     enum CollisionDirection { NONE, TOP, BOTTOM, LEFT, RIGHT };
     CollisionDirection getCollisionDirection(SDL_Rect &rect);
+
+    // STATES
+    enum EntityState { IDLE, DAMAGED_IDLE, WALKING, ATTACKING, TAKING_DAMAGE, DYING };
 
     // PHYSICS
     void applyGravity(float timeStep);
@@ -35,43 +38,54 @@ public:
     void applyAcceleration(float timeStep);
 
     // GETTERS
+    int getHealth();
     SDL_Rect getCollider();
-    float getTextureWidth();
-    float getTextureHeight();
 
     // SETTERS
+    void takeDamage(int damage);
     void setCollider(SDL_Rect rect);
+    void setRelativeColliderPos(SDL_Rect rect);
     void updateCollider();
-    void setSpriteRectX(int x);
-    void setSpriteRectY(int y);
-    void setSpriteClips(SDL_Rect clips[]);
+    void addToSpriteClips(EntityState state, SDL_Rect* clips);
+    void setSpriteClips(SDL_Rect* clips);
+    void setCurrentFrame(int frame);
+    void setCurrentState(EntityState state);
 
     // GLOBALS
     static float GRAVITY;
     static float FRICTION;
 
 protected:
-    // float _health = 100.0f;
-    
+    // health
+    int _health;
+
     // position
     struct XY { float x, y; } _vel, _acc;
     
     // collision
     SDL_Rect _collider;
-    
+    SDL_Rect _relativeColliderPos;
+
     // texture
     Texture _texture;
     SDL_Rect _spriteRect;
+    std::map<EntityState, SDL_Rect*> _allSpriteClips;
     SDL_Rect* _spriteClips;
 
+    // animation
+    int _currentFrame;
+    EntityState _currentState;
+    Timer _animationTimer;
 
     // states
-    int _animationFrame = 1;
-    bool _isAirborne = false;
-    bool _leftPressed = false;
-    bool _rightPressed = false;
-    bool _upPressed = false;
-    bool _downPressed = false;
+    bool _isAirborne;
+    bool _isAnimating;
+    bool _attackHasLanded;
+    bool _leftPressed;
+    bool _rightPressed;
+    bool _upPressed;
+    bool _downPressed;
+    bool _spacePressed;
 };
 
 /* -------------------------------------------------------------------------- */

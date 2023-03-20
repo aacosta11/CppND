@@ -93,19 +93,48 @@ bool Game::loadAssets()
         return false;
 
     // set player sprite clips
-    SDL_Rect sprites[2] = {
+    SDL_Rect* idleClips = new SDL_Rect[1] {
         { 0, 0, 28, 80 },
-        { 28, 0, 52, 80 }
     };
-    _player->setSpriteClips(sprites);
+
+    SDL_Rect* attackingClips = new SDL_Rect[1] {
+        { 28, 0, 40, 80 },
+    };
+
+    _player->addToSpriteClips(Entity::EntityState::IDLE, idleClips);
+    _player->addToSpriteClips(Entity::EntityState::ATTACKING, attackingClips);
+    _player->setCurrentState(Entity::EntityState::IDLE);
+    _player->setCurrentFrame(0);
 
     // load tree texture
     _tree = std::make_unique<Entity>(320, -100);
-    if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/innocent_tree.png"))
+    if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/innocent_tree-sprites.png"))
         return false;
+    _tree->setRelativeColliderPos({ 150, 0, -300, 0 });
+
+    // set tree sprite clips
+    SDL_Rect* treeIdleClips = new SDL_Rect[1] {
+        { 0, 0, 435, 535 },
+    };
+
+    SDL_Rect* treeDamagedIdleClips = new SDL_Rect[1] {
+        { 484, 0, 435, 535 },
+    };
+
+    SDL_Rect* treeDyingClips = new SDL_Rect[1] {
+        { 1015, 325, 738, 209 },
+    };
+
+    _tree->addToSpriteClips(Entity::EntityState::IDLE, treeIdleClips);
+    _tree->addToSpriteClips(Entity::EntityState::DAMAGED_IDLE, treeDamagedIdleClips);
+    _tree->addToSpriteClips(Entity::EntityState::DYING, treeDyingClips);
+
+    _tree->setCurrentState(Entity::EntityState::IDLE);
+    _tree->setCurrentFrame(0);
 
     return true;
 }
+
 
 // MAIN LOOP
 
@@ -142,6 +171,8 @@ void Game::run()
     SDL_Rect rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() - 20 };
     SDL_Rect leftWall = { 0, 0, 20, _gWindow->getHeight() - 20 };
 
+    // _tree->setCurrentSpriteClips()
+
     // main loop
 
     while (!quit)
@@ -169,8 +200,22 @@ void Game::run()
         float timeStep = stepTimer.getTicks() / 1000.f;
 
         // update positions
-        _tree->move(timeStep, { floor, rightWall, leftWall });
-        _player->move(timeStep, { floor, rightWall, leftWall, });
+        _tree->move(timeStep, { floor, rightWall, leftWall, }, {} );
+        _player->move(timeStep, { floor, rightWall, leftWall, }, { _tree.get() });
+
+        // update tree texture
+        if (_tree->getHealth() >= 50)
+        {
+            _tree->setCurrentState(Entity::EntityState::IDLE);
+        }
+        else if (_tree->getHealth() >= 25)
+        {
+            _tree->setCurrentState(Entity::EntityState::DAMAGED_IDLE);
+        }
+        else
+        {
+            _tree->setCurrentState(Entity::EntityState::DYING);
+        }
 
         // restart step timer
         stepTimer.start();
@@ -184,6 +229,7 @@ void Game::run()
         _tree->render(_gRenderer->getRendererHandle());
         _player->render(_gRenderer->getRendererHandle());
 
+        // render collision boxes (for debugging)
         SDL_Rect player = _player->getCollider();
         SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
 

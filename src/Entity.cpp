@@ -6,18 +6,36 @@
 
 // CONSTRUCTORS / DESTRUCTORS
 
-Entity::Entity() : Entity(0, 0) { }
+Entity::Entity() : Entity(0, 0) {}
 
-Entity::Entity(int posX = 0, int posY = 0)
-{   
+Entity::Entity(int posX, int posY)
+{
+    // health
+    _health = 100;
+    // position
     _vel = {0, 0};
     _acc = {0, 0};
+    // collision
     _collider = {posX, posY, 0, 0};
+    _relativeColliderPos = {0, 0, 0, 0};
+    _allSpriteClips = std::map<EntityState, SDL_Rect *>();
     _spriteRect = {posX, posY, 0, 0};
     _spriteClips = NULL;
+    // animation
+    _currentFrame = 0;
+    _currentState = EntityState::IDLE;
+    _animationTimer = Timer();
+    // states
+    _isAirborne = false;
+    _isAnimating = false;
+    _attackHasLanded = false;
+    _leftPressed = false;
+    _rightPressed = false;
+    _upPressed = false;
+    _downPressed = false;
 }
 
-Entity::~Entity() 
+Entity::~Entity()
 {
     if (_spriteClips != NULL)
         delete[] _spriteClips;
@@ -27,13 +45,14 @@ Entity::~Entity()
 
 void Entity::render(SDL_Renderer *renderer)
 {
-    if (_spriteClips == NULL)
+    if (_allSpriteClips.empty())
     {
         _texture.render(renderer, _spriteRect.x, _spriteRect.y, NULL);
         return;
     }
-    // SDL_Rect clip = _spriteClips[0];
-    SDL_Rect clip = { 0, 0, 28, 80 };
+
+    SDL_Rect clip = _allSpriteClips[_currentState][_currentFrame];
+
     _spriteRect.w = clip.w;
     _spriteRect.h = clip.h;
     _texture.render(renderer, _spriteRect.x, _spriteRect.y, &clip);
@@ -49,7 +68,7 @@ bool Entity::loadTexture(SDL_Renderer *renderer, std::string path)
 
 // MOVEMENT
 
-void Entity::move(float timeStep, std::vector<SDL_Rect> colliders)
+void Entity::move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<Entity *> enemies)
 {
     applyGravity(timeStep);
     applyFriction(timeStep);
@@ -64,32 +83,60 @@ void Entity::move(float timeStep, std::vector<SDL_Rect> colliders)
         CollisionDirection dir = getCollisionDirection(collider);
         switch (dir)
         {
-            case CollisionDirection::NONE:
-                break;
-            case CollisionDirection::TOP:
-                _spriteRect.y = collider.y + collider.h;
-                _collider.y = _spriteRect.y;
-                _vel.y = 0;
-                break;
-            case CollisionDirection::BOTTOM:
-                _spriteRect.y = collider.y - _spriteRect.h;
-                _collider.y = _spriteRect.y;
-                _isAirborne = false;
-                _vel.y = 0;
-                break;
-            case CollisionDirection::LEFT:
-                _spriteRect.x = collider.x + collider.w;
-                _collider.x = _spriteRect.x;
-                _vel.x = 0;
-                break;
+        case CollisionDirection::NONE:
+            break;
+        case CollisionDirection::TOP:
+            _spriteRect.y = collider.y + collider.h;
+            _collider.y = _spriteRect.y + _relativeColliderPos.y;
+            _vel.y = 0;
+            break;
+        case CollisionDirection::BOTTOM:
+            _spriteRect.y = collider.y - _spriteRect.h;
+            _collider.y = _spriteRect.y + _relativeColliderPos.y;
+            _isAirborne = false;
+            _vel.y = 0;
+            break;
+        case CollisionDirection::LEFT:
+            _spriteRect.x = collider.x + collider.w;
+            _collider.x = _spriteRect.x + _relativeColliderPos.x;
+            _vel.x = 0;
+            break;
+        case CollisionDirection::RIGHT:
+            _spriteRect.x = collider.x - _spriteRect.w;
+            _collider.x = _spriteRect.x + _relativeColliderPos.x;
+            _vel.x = 0;
+            break;
+        default:
+            break;
+        }
+    }
+
+    // Check for enemy collisions
+    
+    if ( _currentState == EntityState::ATTACKING && !_attackHasLanded )
+    {
+        for (Entity *enemy : enemies)
+        {
+            SDL_Rect enemyCollider = enemy->getCollider();
+            CollisionDirection dir = getCollisionDirection(enemyCollider);
+            switch (dir)
+            {
             case CollisionDirection::RIGHT:
-                _spriteRect.x = collider.x - _spriteRect.w;
-                _collider.x = _spriteRect.x;
-                _vel.x = 0;
+                enemy->takeDamage(10);
+                _attackHasLanded = true;
                 break;
             default:
                 break;
+            }
         }
+    }
+
+    if ( _animationTimer.getTicks() > 100 )
+    {
+        _isAnimating = false;
+        _currentState = EntityState::IDLE;
+        _attackHasLanded = false;
+        _animationTimer.stop();
     }
 }
 
@@ -117,8 +164,8 @@ Entity::CollisionDirection Entity::getCollisionDirection(SDL_Rect &rect)
     int distanceToLeft = abs(LEFT - iLEFT);
     int distanceToRight = abs(RIGHT - iRIGHT);
 
-    int minDistance = std::min({ distanceToTop, distanceToBottom, distanceToLeft, distanceToRight });
-    
+    int minDistance = std::min({distanceToTop, distanceToBottom, distanceToLeft, distanceToRight});
+
     if (intersection.w > intersection.h)
     {
         if (minDistance == distanceToTop)
@@ -163,34 +210,46 @@ void Entity::applyAcceleration(float timeStep)
 
 // GETTERS
 
+int Entity::getHealth() { return _health; }
+
 SDL_Rect Entity::getCollider() { return _collider; }
-
-float Entity::getTextureWidth() { return _texture.getWidth(); }
-
-float Entity::getTextureHeight() { return _texture.getHeight(); }
 
 // SETTERS
 
+void Entity::takeDamage(int damage)
+{
+    _health -= damage;
+    if (_health < 0)
+        _health = 0;
+}
+
 void Entity::setCollider(SDL_Rect rect) { _collider = rect; }
+
+void Entity::setRelativeColliderPos(SDL_Rect rect) { _relativeColliderPos = rect; }
 
 void Entity::updateCollider()
 {
-    _collider.x = _spriteRect.x;
-    _collider.y = _spriteRect.y;
-    _collider.w = _spriteRect.w;
-    _collider.h = _spriteRect.h;
+    _collider.x = _spriteRect.x + _relativeColliderPos.x;
+    _collider.y = _spriteRect.y + _relativeColliderPos.y;
+    _collider.w = _spriteRect.w + _relativeColliderPos.w;
+    _collider.h = _spriteRect.h + _relativeColliderPos.h;
 }
 
-void Entity::setSpriteRectX(int x) { _spriteRect.x = x; }
+void Entity::addToSpriteClips(Entity::EntityState state, SDL_Rect *clips)
+{
+    _allSpriteClips[state] = clips;
+}
 
-void Entity::setSpriteRectY(int y) { _spriteRect.y = y; }
-
-void Entity::setSpriteClips(SDL_Rect clips[]) 
-{  
+void Entity::setSpriteClips(SDL_Rect *clips)
+{
     if (_spriteClips != NULL)
         delete[] _spriteClips;
     _spriteClips = clips;
 }
+
+void Entity::setCurrentFrame(int frame) { _currentFrame = frame; }
+
+void Entity::setCurrentState(Entity::EntityState state) { _currentState = state; }
 
 // GLOBALS
 
@@ -202,11 +261,11 @@ float Entity::FRICTION = 0.1f;
 /* ----------------------------- PLAYABLE ENTITY ---------------------------- */
 /* -------------------------------------------------------------------------- */
 
-PlayableEntity::PlayableEntity(int posX, int posY) : Entity(posX, posY) { }
+PlayableEntity::PlayableEntity(int posX, int posY) : Entity(posX, posY) {}
 
 void PlayableEntity::handleEvent(SDL_Event &e)
 {
-    if (e.type == SDL_KEYDOWN)
+    if (e.type == SDL_KEYDOWN && e.key.repeat == 0)
     {
         switch (e.key.keysym.sym)
         {
@@ -228,17 +287,20 @@ void PlayableEntity::handleEvent(SDL_Event &e)
             break;
         case SDLK_LEFT:
             _leftPressed = true;
-            _vel.x = _isAirborne ?
-                -PLAYER_VELOCITY / 3
-                : 
-                -PLAYER_VELOCITY / 1.5;
+            _vel.x = -PLAYER_VELOCITY / 1.5;
             break;
         case SDLK_RIGHT:
             _rightPressed = true;
-            _vel.x = _isAirborne ?
-                PLAYER_VELOCITY / 2
-                : 
-                PLAYER_VELOCITY;    
+            _vel.x = PLAYER_VELOCITY;
+            break;
+        case SDLK_SPACE:
+            _spacePressed = true;
+            if (!_isAnimating)
+            {
+                _currentState = EntityState::ATTACKING;
+                _animationTimer.start();
+                _isAnimating = true;
+            }
             break;
         }
     }
@@ -261,6 +323,9 @@ void PlayableEntity::handleEvent(SDL_Event &e)
             _rightPressed = false;
             if (!_leftPressed)
                 _vel.x = 0;
+            break;
+        case SDLK_SPACE:
+            _spacePressed = false;
             break;
         }
     }

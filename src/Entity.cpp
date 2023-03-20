@@ -20,7 +20,6 @@ Entity::Entity(int posX, int posY)
     _relativeColliderPos = {0, 0, 0, 0};
     _allSpriteClips = std::map<EntityState, SDL_Rect *>();
     _spriteRect = {posX, posY, 0, 0};
-    _spriteClips = NULL;
     // animation
     _currentFrame = 0;
     _currentState = EntityState::IDLE;
@@ -37,21 +36,38 @@ Entity::Entity(int posX, int posY)
 
 Entity::~Entity()
 {
-    if (_spriteClips != NULL)
-        delete[] _spriteClips;
+    // if (!_allSpriteClips.empty())
+    // {
+    //     for (auto &pair : _allSpriteClips)
+    //     {
+    //         delete[] pair.second;
+    //     }
+    // }
+    if (!_animations.empty())
+    {
+        for (auto &pair : _animations)
+        {
+            delete[] pair.second.clips;
+            delete[] pair.second.relativeColliders;
+        }
+    }
 }
 
 // RENDERING
 
 void Entity::render(SDL_Renderer *renderer)
 {
-    if (_allSpriteClips.empty())
+    if (_animations.empty())
     {
         _texture.render(renderer, _spriteRect.x, _spriteRect.y, NULL);
         return;
     }
 
-    SDL_Rect clip = _allSpriteClips[_currentState][_currentFrame];
+    SDL_Rect clip = _animations[_currentState].clips[_currentFrame];
+    if (_animations[_currentState].relativeColliders != NULL)
+        _relativeColliderPos = _animations[_currentState].relativeColliders[_currentFrame];
+    else 
+        _relativeColliderPos = {0, 0, 0, 0};
 
     _spriteRect.w = clip.w;
     _spriteRect.h = clip.h;
@@ -131,12 +147,22 @@ void Entity::move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<E
         }
     }
 
-    if ( _animationTimer.getTicks() > 100 )
+    // if ( _animationTimer.getTicks() > 100 )
+    // {
+    //     _isAnimating = false;
+    //     _currentState = EntityState::IDLE;
+    //     _attackHasLanded = false;
+    //     _animationTimer.stop();
+    // }
+    if (_animations[_currentState].duration != 0)
     {
-        _isAnimating = false;
-        _currentState = EntityState::IDLE;
-        _attackHasLanded = false;
-        _animationTimer.stop();
+        if (_animationTimer.getTicks() > _animations[_currentState].duration)
+        {
+            _isAnimating = false;
+            _currentState = EntityState::IDLE;
+            _attackHasLanded = false;
+            _animationTimer.stop();
+        }
     }
 }
 
@@ -240,16 +266,14 @@ void Entity::addToSpriteClips(Entity::EntityState state, SDL_Rect *clips)
     _allSpriteClips[state] = clips;
 }
 
-void Entity::setSpriteClips(SDL_Rect *clips)
-{
-    if (_spriteClips != NULL)
-        delete[] _spriteClips;
-    _spriteClips = clips;
-}
-
 void Entity::setCurrentFrame(int frame) { _currentFrame = frame; }
 
 void Entity::setCurrentState(Entity::EntityState state) { _currentState = state; }
+
+void Entity::addAnimation(Entity::EntityState state, SDL_Rect* clips, SDL_Rect* relativeColliders, int duration)
+{
+    _animations[state] = { clips, relativeColliders, duration };
+}
 
 // GLOBALS
 

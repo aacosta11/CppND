@@ -101,8 +101,9 @@ bool Game::loadAssets()
         { 28, 0, 40, 80 },
     };
 
-    _player->addToSpriteClips(Entity::EntityState::IDLE, idleClips);
-    _player->addToSpriteClips(Entity::EntityState::ATTACKING, attackingClips);
+    _player->addAnimation(Entity::EntityState::IDLE, idleClips, NULL, 0);
+    _player->addAnimation(Entity::EntityState::ATTACKING, attackingClips, NULL, 100);
+
     _player->setCurrentState(Entity::EntityState::IDLE);
     _player->setCurrentFrame(0);
 
@@ -110,11 +111,13 @@ bool Game::loadAssets()
     _tree = std::make_unique<Entity>(320, -100);
     if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/innocent_tree-sprites.png"))
         return false;
-    _tree->setRelativeColliderPos({ 150, 0, -300, 0 });
 
     // set tree sprite clips
     SDL_Rect* treeIdleClips = new SDL_Rect[1] {
         { 0, 0, 435, 535 },
+    };
+    SDL_Rect* treeIdleRelativeColliders = new SDL_Rect[1] {
+        { 150, 0, -300, 0 },
     };
 
     SDL_Rect* treeDamagedIdleClips = new SDL_Rect[1] {
@@ -124,10 +127,10 @@ bool Game::loadAssets()
     SDL_Rect* treeDyingClips = new SDL_Rect[1] {
         { 1015, 325, 738, 209 },
     };
-
-    _tree->addToSpriteClips(Entity::EntityState::IDLE, treeIdleClips);
-    _tree->addToSpriteClips(Entity::EntityState::DAMAGED_IDLE, treeDamagedIdleClips);
-    _tree->addToSpriteClips(Entity::EntityState::DYING, treeDyingClips);
+    
+    _tree->addAnimation(Entity::EntityState::IDLE, treeIdleClips, treeIdleRelativeColliders, 0);
+    _tree->addAnimation(Entity::EntityState::DAMAGED_IDLE, treeDamagedIdleClips, treeIdleRelativeColliders, 0);
+    _tree->addAnimation(Entity::EntityState::DYING, treeDyingClips, NULL, 100);
 
     _tree->setCurrentState(Entity::EntityState::IDLE);
     _tree->setCurrentFrame(0);

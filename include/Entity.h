@@ -47,9 +47,9 @@ public:
     void setRelativeColliderPos(SDL_Rect rect);
     void updateCollider();
     void addToSpriteClips(EntityState state, SDL_Rect* clips);
-    void setSpriteClips(SDL_Rect* clips);
     void setCurrentFrame(int frame);
     void setCurrentState(EntityState state);
+    void addAnimation(EntityState state, SDL_Rect* clips, SDL_Rect* relativeColliders, int duration);
 
     // GLOBALS
     static float GRAVITY;
@@ -70,9 +70,10 @@ protected:
     Texture _texture;
     SDL_Rect _spriteRect;
     std::map<EntityState, SDL_Rect*> _allSpriteClips;
-    SDL_Rect* _spriteClips;
 
     // animation
+    struct Animation { SDL_Rect* clips; SDL_Rect* relativeColliders; int duration; };
+    std::map<EntityState, Animation> _animations;
     int _currentFrame;
     EntityState _currentState;
     Timer _animationTimer;

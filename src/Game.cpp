@@ -76,6 +76,94 @@ void Game::closeSDL()
 
 // LOADING
 
+bool Game::loadPlayer()
+{
+
+    _player = std::make_unique<PlayableEntity>(100, 150);
+    if (!_player->loadTexture(_gRenderer->getRendererHandle(), "../assets/player-spritesheet.png"))
+        return false;
+
+    // set player sprite clips
+    std::vector<SDL_Rect> idleClips = {
+        { 16, 0, 55, 143 },
+        { 80, 0, 55, 143 },
+        { 144, 0, 55, 143 },
+        { 208, 0, 55, 143 },
+    };
+    std::vector<SDL_Rect> moveRightClips = {
+        { 16, 149, 55, 143 },
+        { 80, 149, 52, 143 },
+        { 141, 149, 48, 143 },
+        { 198, 149, 53, 143 },
+        { 265, 149, 57, 143 },
+        { 322, 149, 51, 143 },
+        { 383, 149, 52, 143 },
+        { 446, 149, 66, 143 },
+        { 525, 149, 79, 143 },
+        { 617, 149, 99, 143 },
+        { 729, 149, 78, 143 },
+        { 817, 149, 78, 143 },
+    }; 
+    std::vector<SDL_Rect> moveLeftClips = {
+        { 16, 300, 55, 143 },
+        { 104, 300, 53, 143 },
+        { 199, 300, 50, 143 },
+        { 289, 300, 53, 143 },
+        { 378, 300, 53, 143 },
+        { 473, 300, 53, 143 },
+        { 567, 300, 53, 143 },
+        { 655, 300, 55, 143 },
+        { 742, 300, 51, 143 },
+        { 836, 300, 53, 143 },
+        { 927, 300, 57, 143 },
+        { 1021, 300, 57, 143 },
+        { 1112, 300, 52, 143 },
+        { 1204, 300, 51, 143 },
+    };
+    std::vector<SDL_Rect> attackingClips = {
+        { 16, 457, 55, 143 },
+        { 88, 457, 68, 143 },
+        { 166, 457, 93, 143 },
+        { 275, 457, 101, 143 },
+        { 389, 457, 96, 143 },
+    };
+
+    _player->addAnimation(Entity::EntityState::IDLE, idleClips, 0, 500);
+    _player->addAnimation(Entity::EntityState::MOVE_RIGHT, moveRightClips, 0, 150);
+    _player->addAnimation(Entity::EntityState::MOVE_LEFT, moveLeftClips, 0, 150); 
+    _player->addAnimation(Entity::EntityState::ATTACKING, attackingClips, 1, 50);
+
+    return true;
+}
+
+bool Game::loadTree()
+{
+    _tree = std::make_unique<Entity>(320, -100);
+    if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/tree-spritesheet.png"))
+        return false;
+
+    // set tree sprite clips
+    std::vector<SDL_Rect> treeIdleClips {
+        { 16, 0, 501, 500 },
+    };
+
+    std::vector<SDL_Rect> treeDamagedIdleClips {
+        { 580, 0, 502, 500 },
+    };
+
+    std::vector<SDL_Rect> treeUnresponsiveClips {
+        { 1184, 280, 299, 264 },           
+    };
+
+    _tree->addAnimation(Entity::EntityState::IDLE, treeIdleClips, 0, 0); 
+    _tree->addAnimation(Entity::EntityState::DAMAGED_IDLE, treeDamagedIdleClips, 0, 0);
+    _tree->addAnimation(Entity::EntityState::UNRESPONSIVE, treeUnresponsiveClips, 0, 0);
+
+    _tree->setRelativeColliderPos({ 150, 0, -300, 0 });
+
+    return true; 
+}
+
 bool Game::loadAssets()
 {    
     // load backdrop texture
@@ -88,52 +176,12 @@ bool Game::loadAssets()
     _gWindow->setWindowSize(_backdrop->getWidth(), _backdrop->getHeight());
     
     // load player texture
-    _player = std::make_unique<PlayableEntity>(100, 150);
-    if (!_player->loadTexture(_gRenderer->getRendererHandle(), "../assets/player-sprites.png"))
+    if (!loadPlayer())
         return false;
-
-    // set player sprite clips
-    SDL_Rect* idleClips = new SDL_Rect[1] {
-        { 0, 0, 28, 80 },
-    };
-
-    SDL_Rect* attackingClips = new SDL_Rect[1] {
-        { 28, 0, 40, 80 },
-    };
-
-    _player->addAnimation(Entity::EntityState::IDLE, idleClips, NULL, 0);
-    _player->addAnimation(Entity::EntityState::ATTACKING, attackingClips, NULL, 100);
-
-    _player->setCurrentState(Entity::EntityState::IDLE);
-    _player->setCurrentFrame(0);
-
-    // load tree texture
-    _tree = std::make_unique<Entity>(320, -100);
-    if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/innocent_tree-sprites.png"))
-        return false;
-
-    // set tree sprite clips
-    SDL_Rect* treeIdleClips = new SDL_Rect[1] {
-        { 0, 0, 435, 535 },
-    };
-    SDL_Rect* treeIdleRelativeColliders = new SDL_Rect[1] {
-        { 150, 0, -300, 0 },
-    };
-
-    SDL_Rect* treeDamagedIdleClips = new SDL_Rect[1] {
-        { 484, 0, 435, 535 },
-    };
-
-    SDL_Rect* treeDyingClips = new SDL_Rect[1] {
-        { 1015, 325, 738, 209 },
-    };
     
-    _tree->addAnimation(Entity::EntityState::IDLE, treeIdleClips, treeIdleRelativeColliders, 0);
-    _tree->addAnimation(Entity::EntityState::DAMAGED_IDLE, treeDamagedIdleClips, treeIdleRelativeColliders, 0);
-    _tree->addAnimation(Entity::EntityState::DYING, treeDyingClips, NULL, 100);
-
-    _tree->setCurrentState(Entity::EntityState::IDLE);
-    _tree->setCurrentFrame(0);
+    // load tree texture
+    if (!loadTree())
+        return false;
 
     return true;
 }
@@ -174,7 +222,15 @@ void Game::run()
     SDL_Rect rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() - 20 };
     SDL_Rect leftWall = { 0, 0, 20, _gWindow->getHeight() - 20 };
 
-    // _tree->setCurrentSpriteClips()
+    _player->updateCurrentState(Entity::EntityState::IDLE);
+    _tree->updateCurrentState(Entity::EntityState::IDLE);
+
+    // set world objects    
+    _player->setWorldObjects( { floor, rightWall, leftWall, } );
+    _tree->setWorldObjects( { floor, rightWall, leftWall, } );
+
+    // set enemies for player
+    _player->setEnemies( { _tree.get() } );
 
     // main loop
 
@@ -203,21 +259,20 @@ void Game::run()
         float timeStep = stepTimer.getTicks() / 1000.f;
 
         // update positions
-        _tree->move(timeStep, { floor, rightWall, leftWall, }, {} );
-        _player->move(timeStep, { floor, rightWall, leftWall, }, { _tree.get() });
+        _tree->update(timeStep);
+        _player->update(timeStep);
 
-        // update tree texture
-        if (_tree->getHealth() >= 50)
+        if (_tree->getHealth() > 50)
         {
-            _tree->setCurrentState(Entity::EntityState::IDLE);
+            _tree->updateCurrentState(Entity::EntityState::IDLE);
         }
-        else if (_tree->getHealth() >= 25)
+        else if (_tree->getHealth() > 0)
         {
-            _tree->setCurrentState(Entity::EntityState::DAMAGED_IDLE);
+            _tree->updateCurrentState(Entity::EntityState::DAMAGED_IDLE);
         }
         else
         {
-            _tree->setCurrentState(Entity::EntityState::DYING);
+            _tree->updateCurrentState(Entity::EntityState::UNRESPONSIVE);
         }
 
         // restart step timer

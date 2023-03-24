@@ -20,17 +20,15 @@ public:
     // RENDERING
     void render(SDL_Renderer *renderer);
     bool loadTexture(SDL_Renderer *renderer, std::string path);
-
-    // MOVEMENT
-    void move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<Entity*> enemies);
+    void update(float timeStep);
 
     // COLLISION
-    enum CollisionDirection { NONE, TOP, BOTTOM, LEFT, RIGHT };
+    enum CollisionDirection { NONE, TOP, BOTTOM, LEFT,  RIGHT };
     CollisionDirection getCollisionDirection(SDL_Rect &rect);
 
     // STATES
-    enum EntityState { IDLE, DAMAGED_IDLE, WALKING, ATTACKING, TAKING_DAMAGE, DYING };
-
+    enum EntityState { IDLE, DAMAGED_IDLE, MOVE_RIGHT, MOVE_LEFT, ATTACKING, UNRESPONSIVE };
+    void updateCurrentState(EntityState state);       
     // PHYSICS
     void applyGravity(float timeStep);
     void applyFriction(float timeStep);
@@ -43,13 +41,12 @@ public:
 
     // SETTERS
     void takeDamage(int damage);
-    void setCollider(SDL_Rect rect);
-    void setRelativeColliderPos(SDL_Rect rect);
+    void setWorldObjects(std::vector<SDL_Rect> worldObjects);
+    void setEnemies(std::vector<Entity*> enemies);
     void updateCollider();
-    void addToSpriteClips(EntityState state, SDL_Rect* clips);
-    void setCurrentFrame(int frame);
+    void setRelativeColliderPos(SDL_Rect rect);
     void setCurrentState(EntityState state);
-    void addAnimation(EntityState state, SDL_Rect* clips, SDL_Rect* relativeColliders, int duration);
+    void addAnimation(EntityState state, std::vector<SDL_Rect> clips, int cycles, int timeBetweenFrames);
 
     // GLOBALS
     static float GRAVITY;
@@ -58,6 +55,12 @@ public:
 protected:
     // health
     int _health;
+
+    // world objects
+    std::vector<SDL_Rect> _worldObjects;
+
+    // enemies
+    std::vector<Entity*> _enemies;
 
     // position
     struct XY { float x, y; } _vel, _acc;
@@ -69,24 +72,20 @@ protected:
     // texture
     Texture _texture;
     SDL_Rect _spriteRect;
-    std::map<EntityState, SDL_Rect*> _allSpriteClips;
 
     // animation
-    struct Animation { SDL_Rect* clips; SDL_Rect* relativeColliders; int duration; };
+    struct Animation { std::vector<SDL_Rect> clips; int cycles; int timeBetweenFrames; };
     std::map<EntityState, Animation> _animations;
-    int _currentFrame;
     EntityState _currentState;
     Timer _animationTimer;
+    int _currentFrame;
+    int _currentCycle;
 
     // states
     bool _isAirborne;
-    bool _isAnimating;
     bool _attackHasLanded;
-    bool _leftPressed;
-    bool _rightPressed;
-    bool _upPressed;
-    bool _downPressed;
-    bool _spacePressed;
+    bool _leftKeyPressed;
+    bool _rightKeyPressed;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -103,7 +102,7 @@ public:
     void handleEvent(SDL_Event &e);
 
     // CONSTANTS
-    static const int PLAYER_VELOCITY = 200;
+    static const int PLAYER_VELOCITY = 100;
 };
 
 #endif

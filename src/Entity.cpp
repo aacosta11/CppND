@@ -12,13 +12,16 @@ Entity::Entity(int posX, int posY)
 {
     // health
     _health = 100;
+    // world objects
+    _worldObjects = std::vector<SDL_Rect>();
+    // enemies
+    _enemies = std::vector<Entity*>();
     // position
     _vel = {0, 0};
     _acc = {0, 0};
     // collision
     _collider = {posX, posY, 0, 0};
     _relativeColliderPos = {0, 0, 0, 0};
-    _allSpriteClips = std::map<EntityState, SDL_Rect *>();
     _spriteRect = {posX, posY, 0, 0};
     // animation
     _currentFrame = 0;
@@ -26,32 +29,10 @@ Entity::Entity(int posX, int posY)
     _animationTimer = Timer();
     // states
     _isAirborne = false;
-    _isAnimating = false;
     _attackHasLanded = false;
-    _leftPressed = false;
-    _rightPressed = false;
-    _upPressed = false;
-    _downPressed = false;
 }
 
-Entity::~Entity()
-{
-    // if (!_allSpriteClips.empty())
-    // {
-    //     for (auto &pair : _allSpriteClips)
-    //     {
-    //         delete[] pair.second;
-    //     }
-    // }
-    if (!_animations.empty())
-    {
-        for (auto &pair : _animations)
-        {
-            delete[] pair.second.clips;
-            delete[] pair.second.relativeColliders;
-        }
-    }
-}
+Entity::~Entity() { }
 
 // RENDERING
 
@@ -64,11 +45,6 @@ void Entity::render(SDL_Renderer *renderer)
     }
 
     SDL_Rect clip = _animations[_currentState].clips[_currentFrame];
-    if (_animations[_currentState].relativeColliders != NULL)
-        _relativeColliderPos = _animations[_currentState].relativeColliders[_currentFrame];
-    else 
-        _relativeColliderPos = {0, 0, 0, 0};
-
     _spriteRect.w = clip.w;
     _spriteRect.h = clip.h;
     _texture.render(renderer, _spriteRect.x, _spriteRect.y, &clip);
@@ -82,10 +58,9 @@ bool Entity::loadTexture(SDL_Renderer *renderer, std::string path)
     return true;
 }
 
-// MOVEMENT
-
-void Entity::move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<Entity *> enemies)
+void Entity::update(float timeStep)
 {
+    // apply physics
     applyGravity(timeStep);
     applyFriction(timeStep);
     applyVelocity(timeStep);
@@ -93,8 +68,8 @@ void Entity::move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<E
 
     updateCollider();
 
-    // Check for collisions
-    for (SDL_Rect &collider : colliders)
+    // Check for collisions with world objects
+    for (SDL_Rect &collider : _worldObjects)
     {
         CollisionDirection dir = getCollisionDirection(collider);
         switch (dir)
@@ -128,10 +103,9 @@ void Entity::move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<E
     }
 
     // Check for enemy collisions
-    
     if ( _currentState == EntityState::ATTACKING && !_attackHasLanded )
     {
-        for (Entity *enemy : enemies)
+        for (Entity *enemy : _enemies)
         {
             SDL_Rect enemyCollider = enemy->getCollider();
             CollisionDirection dir = getCollisionDirection(enemyCollider);
@@ -147,22 +121,31 @@ void Entity::move(float timeStep, std::vector<SDL_Rect> colliders, std::vector<E
         }
     }
 
-    // if ( _animationTimer.getTicks() > 100 )
-    // {
-    //     _isAnimating = false;
-    //     _currentState = EntityState::IDLE;
-    //     _attackHasLanded = false;
-    //     _animationTimer.stop();
-    // }
-    if (_animations[_currentState].duration != 0)
+    // update animation
+    // update current frame (if time has passed)
+    if (_animationTimer.getTicks() > _animations[_currentState].timeBetweenFrames && _animations[_currentState].timeBetweenFrames > 0)
     {
-        if (_animationTimer.getTicks() > _animations[_currentState].duration)
+        _currentFrame ++;
+        // if current frame is out of bounds, reset to 0
+        if (_currentFrame >= _animations[_currentState].clips.size())
         {
-            _isAnimating = false;
-            _currentState = EntityState::IDLE;
-            _attackHasLanded = false;
-            _animationTimer.stop();
+            _currentFrame = 0;
+            _currentCycle ++;
+            // if number of cycles is reached, reset to 0
+            if (_currentCycle >= _animations[_currentState].cycles && _animations[_currentState].cycles > 0)
+            {
+                _currentCycle = 0;
+
+                // if no key is pressed, set state to idle
+                if ( _leftKeyPressed && !_rightKeyPressed )
+                    _currentState = EntityState::MOVE_LEFT;
+                else if ( _rightKeyPressed && !_leftKeyPressed )
+                    _currentState = EntityState::MOVE_RIGHT;
+                else
+                    _currentState = EntityState::IDLE;
+            }
         }
+        _animationTimer.start();
     }
 }
 
@@ -210,6 +193,18 @@ Entity::CollisionDirection Entity::getCollisionDirection(SDL_Rect &rect)
     return CollisionDirection::NONE;
 }
 
+// STATES
+
+void Entity::updateCurrentState(Entity::EntityState state)
+{
+    _currentState = state;
+    _currentFrame = 0;
+    _currentCycle = 0;
+    _attackHasLanded = false;
+    _animationTimer.start();
+}
+
+
 // PHYSICS
 
 void Entity::applyGravity(float timeStep)
@@ -249,9 +244,9 @@ void Entity::takeDamage(int damage)
         _health = 0;
 }
 
-void Entity::setCollider(SDL_Rect rect) { _collider = rect; }
+void Entity::setWorldObjects(std::vector<SDL_Rect> worldObjects) { _worldObjects = worldObjects; }
 
-void Entity::setRelativeColliderPos(SDL_Rect rect) { _relativeColliderPos = rect; }
+void Entity::setEnemies(std::vector<Entity *> enemies) { _enemies = enemies; }
 
 void Entity::updateCollider()
 {
@@ -261,18 +256,13 @@ void Entity::updateCollider()
     _collider.h = _spriteRect.h + _relativeColliderPos.h;
 }
 
-void Entity::addToSpriteClips(Entity::EntityState state, SDL_Rect *clips)
-{
-    _allSpriteClips[state] = clips;
-}
-
-void Entity::setCurrentFrame(int frame) { _currentFrame = frame; }
+void Entity::setRelativeColliderPos(SDL_Rect rect) { _relativeColliderPos = rect; }
 
 void Entity::setCurrentState(Entity::EntityState state) { _currentState = state; }
 
-void Entity::addAnimation(Entity::EntityState state, SDL_Rect* clips, SDL_Rect* relativeColliders, int duration)
+void Entity::addAnimation(Entity::EntityState state, std::vector<SDL_Rect> clips, int cycles, int timeBetweenFrames)
 {
-    _animations[state] = { clips, relativeColliders, duration };
+    _animations[state] = { clips, cycles, timeBetweenFrames };
 }
 
 // GLOBALS
@@ -300,31 +290,25 @@ void PlayableEntity::handleEvent(SDL_Event &e)
             _vel.y = 0;
             break;
         case SDLK_UP:
-            _upPressed = true;
             if (_isAirborne)
                 break;
             _vel.y = -800;
             _isAirborne = true;
             break;
         case SDLK_DOWN:
-            _downPressed = true;
             break;
         case SDLK_LEFT:
-            _leftPressed = true;
-            _vel.x = -PLAYER_VELOCITY / 1.5;
+            _leftKeyPressed = true;
+            _vel.x = -PLAYER_VELOCITY / 3;
+            updateCurrentState(EntityState::MOVE_LEFT);
             break;
         case SDLK_RIGHT:
-            _rightPressed = true;
+            _rightKeyPressed = true;
             _vel.x = PLAYER_VELOCITY;
+            updateCurrentState(EntityState::MOVE_RIGHT);
             break;
         case SDLK_SPACE:
-            _spacePressed = true;
-            if (!_isAnimating)
-            {
-                _currentState = EntityState::ATTACKING;
-                _animationTimer.start();
-                _isAnimating = true;
-            }
+            updateCurrentState(EntityState::ATTACKING);
             break;
         }
     }
@@ -333,23 +317,24 @@ void PlayableEntity::handleEvent(SDL_Event &e)
         switch (e.key.keysym.sym)
         {
         case SDLK_UP:
-            _upPressed = false;
             break;
         case SDLK_DOWN:
-            _downPressed = false;
             break;
         case SDLK_LEFT:
-            _leftPressed = false;
-            if (!_rightPressed)
+            _leftKeyPressed = false;
+            if (!_rightKeyPressed)
+            {
                 _vel.x = 0;
+                updateCurrentState(EntityState::IDLE);
+            }
             break;
         case SDLK_RIGHT:
-            _rightPressed = false;
-            if (!_leftPressed)
+            _rightKeyPressed = false;
+            if (!_leftKeyPressed)
+            {
                 _vel.x = 0;
-            break;
-        case SDLK_SPACE:
-            _spacePressed = false;
+                updateCurrentState(EntityState::IDLE);
+            }
             break;
         }
     }

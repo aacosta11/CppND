@@ -28,6 +28,8 @@ public:
     void closeSDL();
 
     // LOADING
+    bool loadPlayer();
+    bool loadTree();
     bool loadAssets();
 
     // MAIN LOOP

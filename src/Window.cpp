@@ -43,7 +43,7 @@ void Window::free()
 
 // EVENT HANDLING
 
-void Window::handleEvent(SDL_Event &e, SDL_Renderer *renderer)
+void Window::handleEvent(SDL_Event &e, SDL_Renderer *renderer, bool &hasWindowResized)
 {
     if (e.type == SDL_WINDOWEVENT)
     {
@@ -55,6 +55,7 @@ void Window::handleEvent(SDL_Event &e, SDL_Renderer *renderer)
         case SDL_WINDOWEVENT_SIZE_CHANGED:
             _width = e.window.data1;
             _height = e.window.data2;
+            hasWindowResized = true;
             SDL_RenderPresent(renderer);
             break;
 

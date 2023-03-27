@@ -14,7 +14,7 @@ class Entity
 public:
     // CONSTRUCTORS / DESTRUCTORS
     Entity();
-    Entity(int posX, int posY);
+    Entity(int posX, int posY, int width, int height);
     ~Entity();
 
     // RENDERING
@@ -27,8 +27,9 @@ public:
     CollisionDirection getCollisionDirection(SDL_Rect &rect);
 
     // STATES
-    enum EntityState { IDLE, DAMAGED_IDLE, MOVE_RIGHT, MOVE_LEFT, ATTACKING, UNRESPONSIVE };
-    void updateCurrentState(EntityState state);       
+    enum EntityState { IDLE, DAMAGED_IDLE, MOVE_RIGHT, MOVE_LEFT, ATTACKING, TAKING_DAMAGE, UNRESPONSIVE };
+    void updateCurrentState(EntityState state);   
+    
     // PHYSICS
     void applyGravity(float timeStep);
     void applyFriction(float timeStep);
@@ -37,14 +38,17 @@ public:
 
     // GETTERS
     int getHealth();
+    EntityState getCurrentState();
+    std::vector<SDL_Rect> getCurrentStateClips();
+    int getPosX();
+    int getPosY();
     SDL_Rect getCollider();
 
     // SETTERS
+    void setPosition(int posX, int posY);
     void takeDamage(int damage);
     void setWorldObjects(std::vector<SDL_Rect> worldObjects);
     void setEnemies(std::vector<Entity*> enemies);
-    void updateCollider();
-    void setRelativeColliderPos(SDL_Rect rect);
     void setCurrentState(EntityState state);
     void addAnimation(EntityState state, std::vector<SDL_Rect> clips, int cycles, int timeBetweenFrames);
 
@@ -62,12 +66,11 @@ protected:
     // enemies
     std::vector<Entity*> _enemies;
 
-    // position
+    // physics
     struct XY { float x, y; } _vel, _acc;
     
     // collision
     SDL_Rect _collider;
-    SDL_Rect _relativeColliderPos;
 
     // texture
     Texture _texture;
@@ -96,7 +99,7 @@ class PlayableEntity : public Entity
 {
 public:
     // CONSTRUCTORS / DESTRUCTORS
-    PlayableEntity(int posX, int posY);
+    PlayableEntity(int posX, int posY, int width, int height);
 
     // HANDLE EVENTS
     void handleEvent(SDL_Event &e);

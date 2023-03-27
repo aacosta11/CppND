@@ -10,6 +10,7 @@
 
 #include "Texture.h"
 
+
 class Window
 {
 	public:
@@ -20,7 +21,7 @@ class Window
 
 		bool createWindow( std::string title, int width, int height );
 
-		void handleEvent( SDL_Event& e, SDL_Renderer *renderer );
+		void handleEvent( SDL_Event& e, SDL_Renderer *renderer, bool &hasWindowResized );
 
 		SDL_Window *getWindowHandle();
 		int getWidth();
@@ -32,8 +33,6 @@ class Window
 		void setWindowSize( int width, int height );
 
 	private:
-		friend class Game;
-
 		SDL_Window *_window;
 
 		int _width;

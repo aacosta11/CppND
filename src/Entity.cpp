@@ -6,9 +6,9 @@
 
 // CONSTRUCTORS / DESTRUCTORS
 
-Entity::Entity() : Entity(0, 0) {}
+Entity::Entity() : Entity(0, 0, 0, 0) {}
 
-Entity::Entity(int posX, int posY)
+Entity::Entity(int posX, int posY, int width, int height) : _collider({ posX, posY, width, height}), _spriteRect({posX, posY, 0, 0})
 {
     // health
     _health = 100;
@@ -19,10 +19,6 @@ Entity::Entity(int posX, int posY)
     // position
     _vel = {0, 0};
     _acc = {0, 0};
-    // collision
-    _collider = {posX, posY, 0, 0};
-    _relativeColliderPos = {0, 0, 0, 0};
-    _spriteRect = {posX, posY, 0, 0};
     // animation
     _currentFrame = 0;
     _currentState = EntityState::IDLE;
@@ -38,13 +34,15 @@ Entity::~Entity() { }
 
 void Entity::render(SDL_Renderer *renderer)
 {
-    if (_animations.empty())
+    if (_animations.empty() || _animations.find(_currentState) == _animations.end())
     {
         _texture.render(renderer, _spriteRect.x, _spriteRect.y, NULL);
         return;
     }
 
     SDL_Rect clip = _animations[_currentState].clips[_currentFrame];
+    _spriteRect.x = (_collider.x + _collider.w / 2) - (clip.w / 2);
+    _spriteRect.y = (_collider.y + _collider.h) - clip.h;
     _spriteRect.w = clip.w;
     _spriteRect.h = clip.h;
     _texture.render(renderer, _spriteRect.x, _spriteRect.y, &clip);
@@ -66,8 +64,6 @@ void Entity::update(float timeStep)
     applyVelocity(timeStep);
     applyAcceleration(timeStep);
 
-    updateCollider();
-
     // Check for collisions with world objects
     for (SDL_Rect &collider : _worldObjects)
     {
@@ -77,24 +73,20 @@ void Entity::update(float timeStep)
         case CollisionDirection::NONE:
             break;
         case CollisionDirection::TOP:
-            _spriteRect.y = collider.y + collider.h;
-            _collider.y = _spriteRect.y + _relativeColliderPos.y;
+            _collider.y = collider.y + collider.h;
             _vel.y = 0;
             break;
         case CollisionDirection::BOTTOM:
-            _spriteRect.y = collider.y - _spriteRect.h;
-            _collider.y = _spriteRect.y + _relativeColliderPos.y;
+            _collider.y = collider.y - _collider.h;
             _isAirborne = false;
             _vel.y = 0;
             break;
         case CollisionDirection::LEFT:
-            _spriteRect.x = collider.x + collider.w;
-            _collider.x = _spriteRect.x + _relativeColliderPos.x;
+            _collider.x = collider.x + collider.w;
             _vel.x = 0;
             break;
         case CollisionDirection::RIGHT:
-            _spriteRect.x = collider.x - _spriteRect.w;
-            _collider.x = _spriteRect.x + _relativeColliderPos.x;
+            _collider.x = collider.x - _collider.w;
             _vel.x = 0;
             break;
         default:
@@ -121,7 +113,6 @@ void Entity::update(float timeStep)
         }
     }
 
-    // update animation
     // update current frame (if time has passed)
     if (_animationTimer.getTicks() > _animations[_currentState].timeBetweenFrames && _animations[_currentState].timeBetweenFrames > 0)
     {
@@ -145,6 +136,7 @@ void Entity::update(float timeStep)
                     _currentState = EntityState::IDLE;
             }
         }
+        // reset timer
         _animationTimer.start();
     }
 }
@@ -219,8 +211,8 @@ void Entity::applyFriction(float timeStep)
 
 void Entity::applyVelocity(float timeStep)
 {
-    _spriteRect.x += _vel.x * timeStep;
-    _spriteRect.y += _vel.y * timeStep;
+    _collider.x += _vel.x * timeStep;
+    _collider.y += _vel.y * timeStep;
 }
 
 void Entity::applyAcceleration(float timeStep)
@@ -233,12 +225,29 @@ void Entity::applyAcceleration(float timeStep)
 
 int Entity::getHealth() { return _health; }
 
+Entity::EntityState Entity::getCurrentState() { return _currentState; }
+
+std::vector<SDL_Rect> Entity::getCurrentStateClips() { return _animations[_currentState].clips; }
+
+int Entity::getPosX() { return _collider.x; }
+
+int Entity::getPosY() { return _collider.y; }
+
 SDL_Rect Entity::getCollider() { return _collider; }
 
 // SETTERS
 
+void Entity::setPosition(int posX, int posY)
+{
+    _collider.x = posX;
+    _collider.y = posY;
+}
+
 void Entity::takeDamage(int damage)
 {
+    if (_currentState == EntityState::UNRESPONSIVE)
+        return;
+    updateCurrentState(EntityState::TAKING_DAMAGE);
     _health -= damage;
     if (_health < 0)
         _health = 0;
@@ -247,16 +256,6 @@ void Entity::takeDamage(int damage)
 void Entity::setWorldObjects(std::vector<SDL_Rect> worldObjects) { _worldObjects = worldObjects; }
 
 void Entity::setEnemies(std::vector<Entity *> enemies) { _enemies = enemies; }
-
-void Entity::updateCollider()
-{
-    _collider.x = _spriteRect.x + _relativeColliderPos.x;
-    _collider.y = _spriteRect.y + _relativeColliderPos.y;
-    _collider.w = _spriteRect.w + _relativeColliderPos.w;
-    _collider.h = _spriteRect.h + _relativeColliderPos.h;
-}
-
-void Entity::setRelativeColliderPos(SDL_Rect rect) { _relativeColliderPos = rect; }
 
 void Entity::setCurrentState(Entity::EntityState state) { _currentState = state; }
 
@@ -271,11 +270,16 @@ float Entity::GRAVITY = 9.8f * 250.0f;
 
 float Entity::FRICTION = 0.1f;
 
+
+
+
+
+
 /* -------------------------------------------------------------------------- */
 /* ----------------------------- PLAYABLE ENTITY ---------------------------- */
 /* -------------------------------------------------------------------------- */
 
-PlayableEntity::PlayableEntity(int posX, int posY) : Entity(posX, posY) {}
+PlayableEntity::PlayableEntity(int posX, int posY, int width, int height) : Entity(posX, posY, width, height) {}
 
 void PlayableEntity::handleEvent(SDL_Event &e)
 {
@@ -284,8 +288,8 @@ void PlayableEntity::handleEvent(SDL_Event &e)
         switch (e.key.keysym.sym)
         {
         case SDLK_r:
-            _spriteRect.x = 100;
-            _spriteRect.y = 100;
+            _collider.x = 100;
+            _collider.y = 100;
             _vel.x = 0;
             _vel.y = 0;
             break;

@@ -32,14 +32,24 @@ public:
     bool loadTree();
     bool loadAssets();
 
+    // TREE
+    void updateTreeFrames();
+
+    // EVENTS     
+    void handleWindowResize();
+
     // MAIN LOOP
     void run();
     
     // CONSTANTS
+    static constexpr int PLAYER_HEIGHT = 150;
+    static constexpr int PLAYER_WIDTH = 60;
+    static constexpr int TREE_HEIGHT = 500;
+    static constexpr int TREE_WIDTH = 200;
     static const int SCREEN_WIDTH = 640;
     static const int SCREEN_HEIGHT = 480;
     static const int SCREEN_FPS = 60;
-    static const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
+    static constexpr int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 
 private:
     std::unique_ptr<Window> _gWindow;
@@ -47,6 +57,10 @@ private:
     std::unique_ptr<Texture> _backdrop;
     std::unique_ptr<PlayableEntity> _player;
     std::unique_ptr<Entity> _tree;
+    SDL_Rect _floor, _leftWall, _rightWall;
+
+    struct xy { int x; int y; };
+    xy  _backdropPosition;
 };
 
 #endif

@@ -10,6 +10,7 @@ Game::Game()
     _player = NULL;
     _backdrop = NULL;
     _tree = NULL;
+    _backdropPosition = { 0, 0 };
 }
 
 Game::~Game()
@@ -79,7 +80,7 @@ void Game::closeSDL()
 bool Game::loadPlayer()
 {
 
-    _player = std::make_unique<PlayableEntity>(100, 150);
+    _player = std::make_unique<PlayableEntity>(100, 150, PLAYER_WIDTH, PLAYER_HEIGHT);
     if (!_player->loadTexture(_gRenderer->getRendererHandle(), "../assets/player-spritesheet.png"))
         return false;
 
@@ -138,7 +139,7 @@ bool Game::loadPlayer()
 
 bool Game::loadTree()
 {
-    _tree = std::make_unique<Entity>(320, -100);
+    _tree = std::make_unique<Entity>(350, -200, TREE_WIDTH, TREE_HEIGHT);
     if (!_tree->loadTexture(_gRenderer->getRendererHandle(), "../assets/tree-spritesheet.png"))
         return false;
 
@@ -155,11 +156,16 @@ bool Game::loadTree()
         { 1184, 280, 299, 264 },           
     };
 
+    std::vector<SDL_Rect> treeTakingDamageClips {
+        { 16, 0, 501, 500 },
+        { 20, 0, 501, 500 },
+        { 12, 0, 501, 500 },
+    };
+
     _tree->addAnimation(Entity::EntityState::IDLE, treeIdleClips, 0, 0); 
     _tree->addAnimation(Entity::EntityState::DAMAGED_IDLE, treeDamagedIdleClips, 0, 0);
     _tree->addAnimation(Entity::EntityState::UNRESPONSIVE, treeUnresponsiveClips, 0, 0);
-
-    _tree->setRelativeColliderPos({ 150, 0, -300, 0 });
+    _tree->addAnimation(Entity::EntityState::TAKING_DAMAGE, treeTakingDamageClips, 3, 20);
 
     return true; 
 }
@@ -186,6 +192,74 @@ bool Game::loadAssets()
     return true;
 }
 
+// TREE
+
+void Game::updateTreeFrames() 
+{
+    if (_tree->getCurrentState() == Entity::EntityState::TAKING_DAMAGE)
+    {
+        return;
+    }
+    if (_tree->getHealth() > 50)
+    {
+        _tree->updateCurrentState(Entity::EntityState::IDLE);
+        return;
+    }
+    if (_tree->getHealth() > 0)
+    {
+        std::vector<SDL_Rect> clips = _tree->getCurrentStateClips();
+        clips.push_back( {
+            clips[0].x + 10,
+            clips[0].y,
+            clips[0].w,
+            clips[0].h
+            } 
+        );
+        clips.push_back( {
+            clips[0].x - 10,
+            clips[0].y,
+            clips[0].w,
+            clips[0].h
+            } 
+        );
+        _tree->addAnimation(Entity::EntityState::TAKING_DAMAGE, clips, 3, 20);
+        _tree->updateCurrentState(Entity::EntityState::DAMAGED_IDLE);
+        return;
+    }
+
+
+
+    _tree->updateCurrentState(Entity::EntityState::UNRESPONSIVE);
+}
+
+void Game::handleWindowResize()
+{
+    int relativePlayerX =  _player->getPosX() - _backdropPosition.x;
+    int relativePlayerY =  _player->getPosY() - _backdropPosition.y;
+    int relativeTreeX = _tree->getPosX() - _backdropPosition.x;
+    int relativeTreeY = _tree->getPosY() - _backdropPosition.y;
+
+    // update backdrop position
+    _backdropPosition.x = ( _gWindow->getWidth() / 2 ) - ( _backdrop->getWidth() / 2 );
+    _backdropPosition.y = ( _gWindow->getHeight() / 2 ) - ( _backdrop->getHeight() / 2 );
+
+    // update player position
+    int playerX = _backdropPosition.x + relativePlayerX;
+    int playerY = _backdropPosition.y + relativePlayerY;
+    _player->setPosition(playerX, playerY);
+    
+    // update tree position
+    int treeX = _backdropPosition.x + relativeTreeX;
+    int treeY = _backdropPosition.y + relativeTreeY;
+    _tree->setPosition(treeX, treeY);
+
+    // update world boundaries
+    _floor = { _backdropPosition.x, _backdropPosition.y + _backdrop->getHeight() - 20, _backdrop->getWidth(), 40 };
+    _rightWall = { _backdropPosition.x + _backdrop->getWidth() - 20, _backdropPosition.y, 20, _backdrop->getHeight() };
+    _leftWall = { _backdropPosition.x, _backdropPosition.y, 20, _backdrop->getHeight() };
+    _player->setWorldObjects({ _floor, _rightWall, _leftWall });
+    _tree->setWorldObjects({ _floor, _rightWall, _leftWall });
+}
 
 // MAIN LOOP
 
@@ -218,26 +292,26 @@ void Game::run()
     fpsTimer.start();
 
     // world boundaries
-    SDL_Rect floor = { 0, _gWindow->getHeight() - 20, _gWindow->getWidth(), 40 };
-    SDL_Rect rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() - 20 };
-    SDL_Rect leftWall = { 0, 0, 20, _gWindow->getHeight() - 20 };
+    _floor = { 0, _gWindow->getHeight() - 20, _gWindow->getWidth(), 40 };
+    _rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() - 20 };
+    _leftWall = { 0, 0, 20, _gWindow->getHeight() - 20 };
 
     _player->updateCurrentState(Entity::EntityState::IDLE);
     _tree->updateCurrentState(Entity::EntityState::IDLE);
 
     // set world objects    
-    _player->setWorldObjects( { floor, rightWall, leftWall, } );
-    _tree->setWorldObjects( { floor, rightWall, leftWall, } );
+    _player->setWorldObjects( { _floor, _rightWall, _leftWall, } );
+    _tree->setWorldObjects( { _floor, _rightWall, _leftWall, } );
 
     // set enemies for player
     _player->setEnemies( { _tree.get() } );
 
     // main loop
-
     while (!quit)
     {
         capTimer.start(); // fps cap timer
 
+        bool hasWindowResized = false;
         // handle events on queue
         while (SDL_PollEvent(&e) != 0)
         {
@@ -246,9 +320,13 @@ void Game::run()
                 quit = true;
             
             // handle window events
-            _gWindow->handleEvent(e, _gRenderer->getRendererHandle());
+            _gWindow->handleEvent(e, _gRenderer->getRendererHandle(), hasWindowResized);
             _player->handleEvent(e);
         }
+
+        // handle window resize
+        if (hasWindowResized)
+            handleWindowResize();
 
         // calculate fps
         float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
@@ -262,41 +340,31 @@ void Game::run()
         _tree->update(timeStep);
         _player->update(timeStep);
 
-        if (_tree->getHealth() > 50)
-        {
-            _tree->updateCurrentState(Entity::EntityState::IDLE);
-        }
-        else if (_tree->getHealth() > 0)
-        {
-            _tree->updateCurrentState(Entity::EntityState::DAMAGED_IDLE);
-        }
-        else
-        {
-            _tree->updateCurrentState(Entity::EntityState::UNRESPONSIVE);
-        }
+        // update tree frames
+        updateTreeFrames();
 
         // restart step timer
         stepTimer.start();
 
         // clear screen
-        SDL_SetRenderDrawColor(_gRenderer->getRendererHandle(), 0xFF, 0x00, 0x00, 0xFF);
+        SDL_SetRenderDrawColor(_gRenderer->getRendererHandle(), 0x00, 0x00, 0x00, 0x00);
         SDL_RenderClear(_gRenderer->getRendererHandle());
 
         // render textures
-        _backdrop->render(_gRenderer->getRendererHandle(), 0, 0, NULL);
+        _backdrop->render(_gRenderer->getRendererHandle(), _backdropPosition.x, _backdropPosition.y, NULL);
         _tree->render(_gRenderer->getRendererHandle());
         _player->render(_gRenderer->getRendererHandle());
 
         // render collision boxes (for debugging)
-        SDL_Rect player = _player->getCollider();
-        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
+        // SDL_Rect player = _player->getCollider();
+        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
 
-        SDL_Rect tree = _tree->getCollider();
-        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &tree);
+        // SDL_Rect tree = _tree->getCollider();
+        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &tree);
 
-        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &floor);
-        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &rightWall);
-        SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &leftWall);
+        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_floor);
+        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_rightWall);
+        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_leftWall);
 
         // update screen
         SDL_RenderPresent(_gRenderer->getRendererHandle());

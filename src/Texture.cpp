@@ -2,16 +2,47 @@
 
 // CONSTRUCTORS / DESTRUCTORS
 
-Texture::Texture()
+Texture::Texture() : _texture(NULL), _width(0), _height(0), _INSTANCE_COUNT(1) {}
+
+Texture::Texture(const Texture &texture) : _texture(texture._texture), _width(texture._width), _height(texture._height), _INSTANCE_COUNT(texture._INSTANCE_COUNT + 1) {}
+
+Texture::Texture(Texture &&texture) 
 {
-    _texture = NULL;
-    _width = 0;
-    _height = 0;
+    _texture = texture._texture;
+    _width = texture._width;
+    _height = texture._height;
+    _INSTANCE_COUNT = texture._INSTANCE_COUNT;
+    texture._texture = NULL;
+    texture._INSTANCE_COUNT = 0;
+}
+
+Texture &Texture::operator=(const Texture &texture)
+{
+    _texture = texture._texture;
+    _width = texture._width;
+    _height = texture._height;
+    _INSTANCE_COUNT = texture._INSTANCE_COUNT;
+    return *this;
+}
+
+Texture &Texture::operator=(Texture &&texture)
+{
+    _texture = texture._texture;
+    _width = texture._width;
+    _height = texture._height;
+    _INSTANCE_COUNT = texture._INSTANCE_COUNT;
+    texture._texture = NULL;
+    texture._INSTANCE_COUNT = 0;
+    return *this;
 }
 
 Texture::~Texture()
 {
-    free();
+    _INSTANCE_COUNT--;
+    if (_INSTANCE_COUNT == 1)
+    {   
+        free();
+    }
 }
 
 // DEALLOCATION
@@ -24,6 +55,7 @@ void Texture::free()
         _texture = NULL;
         _width = 0;
         _height = 0;
+        _INSTANCE_COUNT = 0;
     }
 }
 

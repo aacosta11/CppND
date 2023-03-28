@@ -15,6 +15,10 @@ public:
     // CONSTRUCTORS / DESTRUCTORS
     Entity();
     Entity(int posX, int posY, int width, int height);
+    Entity(const Entity &entity);
+    Entity(Entity &&entity);
+    Entity &operator=(const Entity &entity);
+    Entity &operator=(Entity &&entity);
     ~Entity();
 
     // RENDERING

@@ -6,29 +6,33 @@
 class Timer
 {
     public:
+		// CONSTRUCTORS / DESTRUCTORS
 		Timer();
+		Timer(const Timer &timer);
+		Timer(Timer &&timer);
+		Timer &operator=(const Timer &timer);
+		Timer &operator=(Timer &&timer);
+		~Timer();
 
-		//The various clock actions
+		// CLOCK ACTIONS
 		void start();
 		void stop();
 		void pause();
 		void unpause();
 
-		//Gets the timer's time
+		// GET TICKS
 		Uint32 getTicks();
 
-		//Checks the status of the timer
+		// TIMER STATUS
 		bool isStarted();
 		bool isPaused();
 
     private:
-		//The clock time when the timer started
+		// clock time
 		Uint32 _startTicks;
-
-		//The ticks stored when the timer was paused
 		Uint32 _pausedTicks;
 
-		//The timer status
+		// timer status
 		bool _paused;
 		bool _started;
 };

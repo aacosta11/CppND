@@ -21,6 +21,10 @@ class Game
 public:
     // CONSTRUCTORS / DESTRUCTORS
     Game();
+    Game(const Game &game) = delete;
+    Game(const Game &&game) = delete;
+    Game &operator=(const Game &game) = delete;
+    Game &operator=(const Game &&game) = delete;
     ~Game();
 
     // SDL

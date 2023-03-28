@@ -3,7 +3,6 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <memory>
 #include <string>
 
 class Texture
@@ -11,6 +10,10 @@ class Texture
 public:
 	// CONSTRUCTORS / DESTRUCTORS
 	Texture();
+	Texture(const Texture &texture);
+	Texture(Texture &&texture);
+	Texture &operator=(const Texture &texture);
+	Texture &operator=(Texture &&texture);
 	~Texture();
 
 	// DEALLOCATION
@@ -36,6 +39,8 @@ private:
 
 	int _width;
 	int _height;
+
+	int _INSTANCE_COUNT = 0;
 };
 
 #endif

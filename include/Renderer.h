@@ -2,18 +2,28 @@
 #define RENDERER_H
 
 #include <SDL2/SDL.h>
-#include <memory>
 
 class Renderer
 {
 public:
+    // CONSTRUCTORS / DESTRUCTORS
     Renderer();
+    Renderer(const Renderer &renderer) = delete;
+    Renderer(const Renderer &&renderer) = delete;
+    Renderer &operator=(const Renderer &renderer) = delete;
+    Renderer &operator=(const Renderer &&renderer) = delete;
     ~Renderer();
+
+    // DEALLOCATION
+    void free();
+
+    // SDL RENDERER CREATION
     bool createRenderer(SDL_Window *window);
+
+    // GET RENDERER HANDLE
     SDL_Renderer *getRendererHandle();
 
 private:
-    void free();
     SDL_Renderer *_renderer;
 };
 

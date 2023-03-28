@@ -1,45 +1,47 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <string>
-#include <memory>
-#include <stdexcept>
-#include <stdio.h>
-
 #include "Texture.h"
-
 
 class Window
 {
 	public:
+		// CONSTRUCTORS / DESTRUCTORS
 		Window();
+		Window(const Window &window);
+		Window(Window &&window);
+		Window &operator=(const Window &window);
+		Window &operator=(Window &&window);
 		~Window();
-
+		
+		// DEALLOCATION
 		void free();
 
+		// SDL WINDOW CREATION
 		bool createWindow( std::string title, int width, int height );
 
+		// EVENTS
 		void handleEvent( SDL_Event& e, SDL_Renderer *renderer, bool &hasWindowResized );
 
+		// GETTERS
 		SDL_Window *getWindowHandle();
+		std::string getTitle();
 		int getWidth();
 		int getHeight();
-		bool hasMouseFocus();
-		bool hasKeyboardFocus();
 		bool isMinimized();
-
+		
+		// SETTERS
+		void setTitle( std::string title );
 		void setWindowSize( int width, int height );
 
 	private:
 		SDL_Window *_window;
 
+		std::string _title;
+
 		int _width;
 		int _height;
 
-		bool _mouseFocus;
-		bool _keyboardFocus;
 		bool _fullScreen;
 		bool _minimized;
 };

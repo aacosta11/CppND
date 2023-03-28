@@ -19,13 +19,137 @@ Entity::Entity(int posX, int posY, int width, int height) : _collider({ posX, po
     // position
     _vel = {0, 0};
     _acc = {0, 0};
+    // texture
+    _texture = Texture();
     // animation
-    _currentFrame = 0;
+    _animations = std::map<EntityState, Animation>();
     _currentState = EntityState::IDLE;
     _animationTimer = Timer();
+    _currentFrame = 0;
+    _currentCycle = 0;
     // states
     _isAirborne = false;
     _attackHasLanded = false;
+    _leftKeyPressed = false;
+    _rightKeyPressed = false;
+}
+
+Entity::Entity(const Entity &entity)
+{
+    _health = 100;
+    _worldObjects = entity._worldObjects;
+    _enemies = entity._enemies;
+    _vel = { 0, 0 };
+    _acc = { 0, 0 };
+    _collider = entity._collider;
+    _texture = entity._texture;
+    _spriteRect = entity._spriteRect;
+    _animations = entity._animations;
+    _currentState = EntityState::IDLE;
+    _animationTimer = entity._animationTimer;
+    _currentFrame = 0;
+    _currentCycle = 0;
+    _isAirborne = false;
+    _attackHasLanded = false;
+    _leftKeyPressed = false;
+    _rightKeyPressed = false;
+}
+
+Entity::Entity(Entity &&entity)
+{
+    _health = entity._health;
+    _worldObjects = entity._worldObjects;
+    _enemies = entity._enemies;
+    _vel = entity._vel;
+    _acc = entity._acc;
+    _collider = entity._collider;
+    _texture = std::move(entity._texture);
+    _spriteRect = entity._spriteRect;
+    _animations = entity._animations;
+    _currentState = entity._currentState;
+    _animationTimer = entity._animationTimer;
+    _currentFrame = entity._currentFrame;
+    _currentCycle = entity._currentCycle;
+    _isAirborne = entity._isAirborne;
+    _attackHasLanded = entity._attackHasLanded;
+    _leftKeyPressed = entity._leftKeyPressed;
+    _rightKeyPressed = entity._rightKeyPressed;
+
+    entity._health = 0;
+    entity._worldObjects = std::vector<SDL_Rect>();
+    entity._enemies = std::vector<Entity*>();
+    entity._vel = { 0, 0 };
+    entity._acc = { 0, 0 };
+    entity._collider = { 0, 0, 0, 0 };
+    entity._spriteRect = { 0, 0, 0, 0 };
+    entity._currentState = EntityState::IDLE;
+    entity._animationTimer = Timer();
+    entity._currentFrame = 0;
+    entity._currentCycle = 0;
+    entity._isAirborne = false;
+    entity._attackHasLanded = false;
+    entity._leftKeyPressed = false;
+    entity._rightKeyPressed = false;
+}
+
+Entity& Entity::operator=(const Entity &entity)
+{
+    _health = 100;
+    _worldObjects = entity._worldObjects;
+    _enemies = entity._enemies;
+    _vel = { 0, 0 };
+    _acc = { 0, 0 };
+    _collider = entity._collider;
+    _texture = entity._texture;
+    _spriteRect = entity._spriteRect;
+    _animations = entity._animations;
+    _currentState = EntityState::IDLE;
+    _animationTimer = entity._animationTimer;
+    _currentFrame = 0;
+    _currentCycle = 0;
+    _isAirborne = false;
+    _attackHasLanded = false;
+    _leftKeyPressed = false;
+    _rightKeyPressed = false;
+    return *this;
+}
+
+Entity& Entity::operator=(Entity &&entity)
+{
+    _health = entity._health;
+    _worldObjects = entity._worldObjects;
+    _enemies = entity._enemies;
+    _vel = entity._vel;
+    _acc = entity._acc;
+    _collider = entity._collider;
+    _texture = std::move(entity._texture);
+    _spriteRect = entity._spriteRect;
+    _animations = entity._animations;
+    _currentState = entity._currentState;
+    _animationTimer = entity._animationTimer;
+    _currentFrame = entity._currentFrame;
+    _currentCycle = entity._currentCycle;
+    _isAirborne = entity._isAirborne;
+    _attackHasLanded = entity._attackHasLanded;
+    _leftKeyPressed = entity._leftKeyPressed;
+    _rightKeyPressed = entity._rightKeyPressed;
+
+    entity._health = 0;
+    entity._worldObjects = std::vector<SDL_Rect>();
+    entity._enemies = std::vector<Entity*>();
+    entity._vel = { 0, 0 };
+    entity._acc = { 0, 0 };
+    entity._collider = { 0, 0, 0, 0 };
+    entity._spriteRect = { 0, 0, 0, 0 };
+    entity._currentState = EntityState::IDLE;
+    entity._animationTimer = Timer();
+    entity._currentFrame = 0;
+    entity._currentCycle = 0;
+    entity._isAirborne = false;
+    entity._attackHasLanded = false;
+    entity._leftKeyPressed = false;
+    entity._rightKeyPressed = false;
+    return *this;
 }
 
 Entity::~Entity() { }

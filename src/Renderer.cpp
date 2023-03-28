@@ -1,25 +1,15 @@
 #include "Renderer.h"
 
-Renderer::Renderer()
-{
-    _renderer = NULL;
-}
+// CONSTRUCTORS / DESTRUCTORS
+
+Renderer::Renderer() : _renderer(NULL) { }
 
 Renderer::~Renderer()
 {
     free();
 }
 
-bool Renderer::createRenderer(SDL_Window *window)
-{
-    _renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    return _renderer != NULL;
-}
-
-SDL_Renderer *Renderer::getRendererHandle()
-{
-    return _renderer;
-}
+// DEALLOCATION
 
 void Renderer::free()
 {
@@ -28,4 +18,19 @@ void Renderer::free()
         SDL_DestroyRenderer(_renderer);
         _renderer = NULL;
     }
+}
+
+// SDL RENDERER CREATION
+
+bool Renderer::createRenderer(SDL_Window *window)
+{
+    _renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    return _renderer != NULL;
+}
+
+// GET RENDERER HANDLE
+
+SDL_Renderer *Renderer::getRendererHandle()
+{
+    return _renderer;
 }

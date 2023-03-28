@@ -1,13 +1,64 @@
 #include "Timer.h"
 
-Timer::Timer()
-{
-    _startTicks = 0;
-    _pausedTicks = 0;
+// CONSTRUCTORS / DESTRUCTORS
 
-    _paused = false;
-    _started = false;
+Timer::Timer() : _startTicks(0), _pausedTicks(0), _paused(false), _started(false) {}
+
+Timer::Timer(const Timer &timer)
+{
+    _startTicks = timer._startTicks;
+    _pausedTicks = timer._pausedTicks;
+
+    _paused = timer._paused;
+    _started = timer._started;
 }
+
+Timer::Timer(Timer &&timer)
+{
+    _startTicks = timer._startTicks;
+    _pausedTicks = timer._pausedTicks;
+
+    _paused = timer._paused;
+    _started = timer._started;
+
+    timer._startTicks = 0;
+    timer._pausedTicks = 0;
+
+    timer._paused = false;
+    timer._started = false;
+}
+
+Timer &Timer::operator=(const Timer &timer)
+{
+    _startTicks = timer._startTicks;
+    _pausedTicks = timer._pausedTicks;
+
+    _paused = timer._paused;
+    _started = timer._started;
+
+    return *this;
+}
+
+Timer &Timer::operator=(Timer &&timer)
+{
+    _startTicks = timer._startTicks;
+    _pausedTicks = timer._pausedTicks;
+
+    _paused = timer._paused;
+    _started = timer._started;
+
+    timer._startTicks = 0;
+    timer._pausedTicks = 0;
+
+    timer._paused = false;
+    timer._started = false;
+
+    return *this;
+}
+
+Timer::~Timer() { }
+
+// CLOCK ACTIONS
 
 void Timer::start()
 {
@@ -55,6 +106,8 @@ void Timer::unpause()
     }
 }
 
+// GET TICKS
+
 Uint32 Timer::getTicks()
 {
     Uint32 time = 0;
@@ -64,6 +117,9 @@ Uint32 Timer::getTicks()
     
     return time;
 }
+
+
+// TIMER STATUS
 
 bool Timer::isStarted()
 {

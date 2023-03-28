@@ -2,13 +2,40 @@
 
 // CONSTRUCTORS / DESTRUCTORS
 
-Window::Window()
+Window::Window() : _window(NULL), _title("new window"), _width(0), _height(0) {}
+
+Window::Window(const Window &window)
 {
-    _window = NULL;
-    _mouseFocus = false;
-    _keyboardFocus = false;
-    _width = 0;
-    _height = 0;
+    _title = window._title;
+    _width = window._width;
+    _height = window._height;
+    createWindow(_title, _width, _height);
+}
+
+Window::Window(Window &&window)
+{
+    _title = window._title;
+    _width = window._width;
+    _height = window._height;
+    window._window = NULL;
+}
+
+Window &Window::operator=(const Window &window)
+{
+    _title = window._title;
+    _width = window._width;
+    _height = window._height;
+    createWindow(_title, _width, _height);
+    return *this;
+}
+
+Window &Window::operator=(Window &&window)
+{
+    _title = window._title;
+    _width = window._width;
+    _height = window._height;
+    window._window = NULL;
+    return *this;
 }
 
 Window::~Window()
@@ -16,21 +43,7 @@ Window::~Window()
     free();
 }
 
-// WINDOW CREATION
-
-bool Window::createWindow(std::string title = "new window", int width = 0, int height = 0)
-{
-    _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
-
-    _mouseFocus = true;
-    _keyboardFocus = true;
-    _width = width;
-    _height = height;
-
-    return _window != NULL;
-}
-
-// DEALLOCATE RESOURCES
+// DEALLOCATION
 
 void Window::free()
 {
@@ -41,51 +54,38 @@ void Window::free()
     }
 }
 
+// SDL WINDOW CREATION
+
+bool Window::createWindow(std::string title, int width, int height)
+{
+    _window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    
+    _title = title;
+    _width = width;
+    _height = height;
+
+    return _window != NULL;
+}
+
 // EVENT HANDLING
 
 void Window::handleEvent(SDL_Event &e, SDL_Renderer *renderer, bool &hasWindowResized)
 {
     if (e.type == SDL_WINDOWEVENT)
     {
-        bool updateCaption = false;
-
         switch (e.window.event)
         {
         // get new dimensions and repaint on window size change
         case SDL_WINDOWEVENT_SIZE_CHANGED:
+            hasWindowResized = true;
             _width = e.window.data1;
             _height = e.window.data2;
-            hasWindowResized = true;
             SDL_RenderPresent(renderer);
             break;
 
         // repaint on exposure
         case SDL_WINDOWEVENT_EXPOSED:
             SDL_RenderPresent(renderer);
-            break;
-
-        // mouse entered window
-        case SDL_WINDOWEVENT_ENTER:
-            _mouseFocus = true;
-            updateCaption = true;
-            break;
-
-        // mouse left window
-        case SDL_WINDOWEVENT_LEAVE:
-            _mouseFocus = false;
-            updateCaption = true;
-            break;
-
-        // window has keyboard focus
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
-            _keyboardFocus = true;
-            updateCaption = true;
-            break;
-
-        // window lost keyboard focus
-        case SDL_WINDOWEVENT_FOCUS_LOST:
-            _keyboardFocus = false;
-            updateCaption = true;
             break;
 
         // window minimized
@@ -125,17 +125,21 @@ void Window::handleEvent(SDL_Event &e, SDL_Renderer *renderer, bool &hasWindowRe
 
 SDL_Window *Window::getWindowHandle() { return _window; }
 
+std::string Window::getTitle() { return _title; }
+
 int Window::getWidth() { return _width; }
 
 int Window::getHeight() { return _height; }
 
-bool Window::hasMouseFocus() { return _mouseFocus; }
-
-bool Window::hasKeyboardFocus() { return _keyboardFocus; }
-
 bool Window::isMinimized() { return _minimized; }
 
 // SETTERS
+
+void Window::setTitle(std::string title)
+{
+    _title = title;
+    SDL_SetWindowTitle(_window, title.c_str());
+}
 
 void Window::setWindowSize(int width, int height)
 {

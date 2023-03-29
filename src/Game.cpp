@@ -10,6 +10,7 @@ Game::Game()
     _player = NULL;
     _backdrop = NULL;
     _tree = NULL;
+    _startButton = NULL;
     _backdropPosition = { 0, 0 };
 }
 
@@ -70,6 +71,7 @@ void Game::closeSDL()
     _backdrop.reset();
     _player.reset();
     _tree.reset();
+    _startButton.reset();
 
     IMG_Quit();
     SDL_Quit();
@@ -86,47 +88,47 @@ bool Game::loadPlayer()
 
     // set player sprite clips
     std::vector<SDL_Rect> idleClips = {
-        { 16, 0, 55, 143 },
-        { 80, 0, 55, 143 },
-        { 144, 0, 55, 143 },
-        { 208, 0, 55, 143 },
+        { 0, 0, 146, 150 },
+        { 146, 0, 146, 150 },
+        { 292, 0, 146, 150 },
+        { 438, 0, 146, 150 },
     };
     std::vector<SDL_Rect> moveRightClips = {
-        { 16, 149, 55, 143 },
-        { 80, 149, 52, 143 },
-        { 141, 149, 48, 143 },
-        { 198, 149, 53, 143 },
-        { 265, 149, 57, 143 },
-        { 322, 149, 51, 143 },
-        { 383, 149, 52, 143 },
-        { 446, 149, 66, 143 },
-        { 525, 149, 79, 143 },
-        { 617, 149, 99, 143 },
-        { 729, 149, 78, 143 },
-        { 817, 149, 78, 143 },
+        { 0, 160, 146, 150 },
+        { 146, 160, 146, 150 },
+        { 292, 160, 146, 150 },
+        { 438, 160, 146, 150 },
+        { 584, 160, 146, 150 },
+        { 730, 160, 146, 150 },
+        { 876, 160, 146, 150 },
+        { 1022, 160, 146, 150 },
+        { 1168, 160, 146, 150 },
+        { 1314, 160, 146, 150 },
+        { 1460, 160, 146, 150 },
+        { 1606, 160, 146, 150 },
     }; 
     std::vector<SDL_Rect> moveLeftClips = {
-        { 16, 300, 55, 143 },
-        { 104, 300, 53, 143 },
-        { 199, 300, 50, 143 },
-        { 289, 300, 53, 143 },
-        { 378, 300, 53, 143 },
-        { 473, 300, 53, 143 },
-        { 567, 300, 53, 143 },
-        { 655, 300, 55, 143 },
-        { 742, 300, 51, 143 },
-        { 836, 300, 53, 143 },
-        { 927, 300, 57, 143 },
-        { 1021, 300, 57, 143 },
-        { 1112, 300, 52, 143 },
-        { 1204, 300, 51, 143 },
+        { 0, 320, 146, 150 },
+        { 146, 320, 146, 150 },
+        { 292, 320, 146, 150 },
+        { 438, 320, 146, 150 },
+        { 584, 320, 146, 150 },
+        { 730, 320, 146, 150 },
+        { 876, 320, 146, 150 },
+        { 1022, 320, 146, 150 },
+        { 1168, 320, 146, 150 },
+        { 1314, 320, 146, 150 },
+        { 1460, 320, 146, 150 },
+        { 1606, 320, 146, 150 },
+        { 1752, 320, 146, 150 },
+        { 1898, 320, 146, 150 },
     };
     std::vector<SDL_Rect> attackingClips = {
-        { 16, 457, 55, 143 },
-        { 88, 457, 68, 143 },
-        { 166, 457, 93, 143 },
-        { 275, 457, 101, 143 },
-        { 389, 457, 96, 143 },
+        { 0, 480, 177, 159 },
+        { 177, 480, 177, 159 },
+        { 354, 480, 177, 159 },
+        { 532, 480, 177, 159 },
+        { 709, 480, 177, 159 },
     };
 
     _player->addAnimation(Entity::EntityState::IDLE, idleClips, 0, 500);
@@ -180,6 +182,12 @@ bool Game::loadAssets()
     _backdrop->setHeight(SCREEN_HEIGHT);
     _backdrop->setWidth(SCREEN_HEIGHT / ratio);
     _gWindow->setWindowSize(_backdrop->getWidth(), _backdrop->getHeight());
+
+    // load start button texture
+    _startButton = std::make_unique<Button>();
+    if (!_startButton->loadFromFile(_gRenderer->getRendererHandle(), "../assets/start-button.png"))
+        return false;
+    _startButton->setPosition(_backdrop->getWidth() / 2 - _startButton->getWidth() / 2, _backdrop->getHeight() / 2 - _startButton->getHeight() / 2);
     
     // load player texture
     if (!loadPlayer())
@@ -227,8 +235,6 @@ void Game::updateTreeFrames()
         return;
     }
 
-
-
     _tree->updateCurrentState(Entity::EntityState::UNRESPONSIVE);
 }
 
@@ -265,15 +271,12 @@ void Game::handleWindowResize()
 
 void Game::run()
 {
-    // start up SDL and create window
     if (!initSDL())
     {
         printf("Failed to initialize!\n");
         throw std::runtime_error("Failed to initialize!");
         return;
     }
-
-    // load player texture
     if (!loadAssets())
     {
         printf("Failed to load game assets!\n");
@@ -281,9 +284,9 @@ void Game::run()
         return;
     }
 
-    bool quit = false;
     SDL_Event e;
 
+    // start timers
     Timer stepTimer;
     Timer capTimer;
     Timer fpsTimer;
@@ -295,23 +298,23 @@ void Game::run()
     _floor = { 0, _gWindow->getHeight() - 20, _gWindow->getWidth(), 40 };
     _rightWall = { _gWindow->getWidth() - 20, 0, 20, _gWindow->getHeight() - 20 };
     _leftWall = { 0, 0, 20, _gWindow->getHeight() - 20 };
+    _player->setWorldObjects( { _floor, _rightWall, _leftWall, } );
+    _tree->setWorldObjects( { _floor, _rightWall, _leftWall, } );
 
     _player->updateCurrentState(Entity::EntityState::IDLE);
     _tree->updateCurrentState(Entity::EntityState::IDLE);
 
-    // set world objects    
-    _player->setWorldObjects( { _floor, _rightWall, _leftWall, } );
-    _tree->setWorldObjects( { _floor, _rightWall, _leftWall, } );
-
-    // set enemies for player
     _player->setEnemies( { _tree.get() } );
 
     // main loop
+    bool gameStarted = false;
+    bool quit = false;
     while (!quit)
     {
-        capTimer.start(); // fps cap timer
+        capTimer.start();
 
         bool hasWindowResized = false;
+
         // handle events on queue
         while (SDL_PollEvent(&e) != 0)
         {
@@ -322,6 +325,7 @@ void Game::run()
             // handle window events
             _gWindow->handleEvent(e, _gRenderer->getRendererHandle(), hasWindowResized);
             _player->handleEvent(e);
+            _startButton->handleSDLEvent(e, gameStarted);
         }
 
         // handle window resize
@@ -333,38 +337,47 @@ void Game::run()
         if (avgFPS > 2000000)
             avgFPS = 0;
 
-        // calculate time step
-        float timeStep = stepTimer.getTicks() / 1000.f;
-
-        // update positions
-        _tree->update(timeStep);
-        _player->update(timeStep);
-
-        // update tree frames
-        updateTreeFrames();
-
-        // restart step timer
-        stepTimer.start();
-
         // clear screen
         SDL_SetRenderDrawColor(_gRenderer->getRendererHandle(), 0x00, 0x00, 0x00, 0x00);
         SDL_RenderClear(_gRenderer->getRendererHandle());
 
-        // render textures
         _backdrop->render(_gRenderer->getRendererHandle(), _backdropPosition.x, _backdropPosition.y, NULL);
-        _tree->render(_gRenderer->getRendererHandle());
-        _player->render(_gRenderer->getRendererHandle());
+        
+        if (gameStarted)
+        {
+            // calculate time step
+            float timeStep = stepTimer.getTicks() / 1000.f;
 
-        // render collision boxes (for debugging)
-        // SDL_Rect player = _player->getCollider();
-        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
+            // update positions
+            _tree->update(timeStep);
+            _player->update(timeStep);
 
-        // SDL_Rect tree = _tree->getCollider();
-        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &tree);
+            // update tree frames
+            updateTreeFrames();
 
-        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_floor);
-        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_rightWall);
-        // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_leftWall);
+            // restart step timer
+            stepTimer.start();
+
+            // render textures
+            _tree->render(_gRenderer->getRendererHandle());
+            _player->render(_gRenderer->getRendererHandle());
+
+            // render collision boxes (for debugging)
+            // SDL_Rect player = _player->getCollider();
+            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
+
+            // SDL_Rect tree = _tree->getCollider();
+            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &tree);
+
+            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_floor);
+            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_rightWall);
+            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_leftWall);
+        }
+        else
+        {
+            // render start button
+            _startButton->render(_gRenderer->getRendererHandle());
+        }
 
         // update screen
         SDL_RenderPresent(_gRenderer->getRendererHandle());

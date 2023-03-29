@@ -14,6 +14,7 @@
 #include "Texture.h"
 #include "Entity.h"
 #include "Timer.h"
+#include "Button.h"
 
 
 class Game
@@ -39,7 +40,7 @@ public:
     // TREE
     void updateTreeFrames();
 
-    // EVENTS     
+    // EVENTS
     void handleWindowResize();
 
     // MAIN LOOP
@@ -61,6 +62,7 @@ private:
     std::unique_ptr<Texture> _backdrop;
     std::unique_ptr<PlayableEntity> _player;
     std::unique_ptr<Entity> _tree;
+    std::unique_ptr<Button> _startButton;
     SDL_Rect _floor, _leftWall, _rightWall;
 
     struct xy { int x; int y; };

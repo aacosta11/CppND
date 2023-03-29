@@ -2,7 +2,6 @@
 /* --------------------------------- ENTITY --------------------------------- */
 /* -------------------------------------------------------------------------- */
 #include "Entity.h"
-#include <iterator>
 
 // CONSTRUCTORS / DESTRUCTORS
 
@@ -174,7 +173,7 @@ void Entity::render(SDL_Renderer *renderer)
 
 bool Entity::loadTexture(SDL_Renderer *renderer, std::string path)
 {
-    _texture.loadFromFile(renderer, path);
+    if (!_texture.loadFromFile(renderer, path)) return false;
     _spriteRect.w = _texture.getWidth();
     _spriteRect.h = _texture.getHeight();
     return true;
@@ -225,15 +224,9 @@ void Entity::update(float timeStep)
         {
             SDL_Rect enemyCollider = enemy->getCollider();
             CollisionDirection dir = getCollisionDirection(enemyCollider);
-            switch (dir)
-            {
-            case CollisionDirection::RIGHT:
-                enemy->takeDamage(10);
-                _attackHasLanded = true;
-                break;
-            default:
-                break;
-            }
+            if ( dir == CollisionDirection::NONE ) continue;
+            enemy->takeDamage(10);
+            _attackHasLanded = true;
         }
     }
 
@@ -390,7 +383,7 @@ void Entity::addAnimation(Entity::EntityState state, std::vector<SDL_Rect> clips
 
 // GLOBALS
 
-float Entity::GRAVITY = 9.8f * 250.0f;
+float Entity::GRAVITY = 9.8f * 300.0f;
 
 float Entity::FRICTION = 0.1f;
 
@@ -411,26 +404,20 @@ void PlayableEntity::handleEvent(SDL_Event &e)
     {
         switch (e.key.keysym.sym)
         {
-        case SDLK_r:
-            _collider.x = 100;
-            _collider.y = 100;
-            _vel.x = 0;
-            _vel.y = 0;
-            break;
-        case SDLK_UP:
+        case SDLK_w:
             if (_isAirborne)
                 break;
             _vel.y = -800;
             _isAirborne = true;
             break;
-        case SDLK_DOWN:
+        case SDLK_s:
             break;
-        case SDLK_LEFT:
+        case SDLK_a:
             _leftKeyPressed = true;
             _vel.x = -PLAYER_VELOCITY / 3;
             updateCurrentState(EntityState::MOVE_LEFT);
             break;
-        case SDLK_RIGHT:
+        case SDLK_d:
             _rightKeyPressed = true;
             _vel.x = PLAYER_VELOCITY;
             updateCurrentState(EntityState::MOVE_RIGHT);
@@ -444,11 +431,11 @@ void PlayableEntity::handleEvent(SDL_Event &e)
     {
         switch (e.key.keysym.sym)
         {
-        case SDLK_UP:
+        case SDLK_w:
             break;
-        case SDLK_DOWN:
+        case SDLK_s:
             break;
-        case SDLK_LEFT:
+        case SDLK_a:
             _leftKeyPressed = false;
             if (!_rightKeyPressed)
             {
@@ -456,7 +443,7 @@ void PlayableEntity::handleEvent(SDL_Event &e)
                 updateCurrentState(EntityState::IDLE);
             }
             break;
-        case SDLK_RIGHT:
+        case SDLK_d:
             _rightKeyPressed = false;
             if (!_leftKeyPressed)
             {

@@ -6,7 +6,7 @@ The Capstone Project gives you a chance to integrate what you've learned through
 
 In this project, you can build your own C++ application starting with this repo, following the principles you have learned throughout this Nanodegree Program. This project will demonstrate that you can independently create applications using a wide range of C++ features.
 
-## Dependencies for Running Locally
+## Dependencies
 * cmake >= 3.7
   * All OSes: [click here for installation instructions](https://cmake.org/install/)
 * make >= 4.1 (Linux, Mac), 3.81 (Windows)
@@ -17,10 +17,18 @@ In this project, you can build your own C++ application starting with this repo,
   * Linux: gcc / g++ is installed by default on most Linux distros
   * Mac: same deal as make - [install Xcode command line tools](https://developer.apple.com/xcode/features/)
   * Windows: recommend using [MinGW](http://www.mingw.org/)
+* SDL >= 2.6 (Linux, Mac), 2.0.8 (Windows)
+  * Linux: `sudo apt-get install libsdl2-dev`
+  * Mac: `brew install sdl2`
+  * Windows: [Click here for installation instructions](https://wiki.libsdl.org/Installation)
+* SDL_image >= 2.0.0 (Linux, Mac), 2.0.1 (Windows)
+  * Linux: `sudo apt-get install libsdl2-image-dev`
+  * Mac: `brew install sdl2_image`
+  * Windows: [Click here for installation instructions](https://www.libsdl.org/projects/SDL_image/)
 
-## Basic Build Instructions
+## Build Instructions
 
 1. Clone this repo.
 2. Make a build directory in the top level directory: `mkdir build && cd build`
 3. Compile: `cmake .. && make`
-4. Run it: `./CppND-Capstone`.
+4. Run it: `./capstone`.

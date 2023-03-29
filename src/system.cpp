@@ -32,10 +32,10 @@ int System::TotalProcesses() { return LinuxParser::TotalProcesses(); }
 // Return the system's memory utilization //
 float System::MemoryUtilization() { return LinuxParser::MemoryUtilization(); }
 
-// TODO: Return the system's CPU
+// Return the system's CPU //
 Processor& System::Cpu() { return cpu_; }
 
-// TODO: Return a container composed of the system's processes
+// Return a container composed of the system's processes //
 vector<Process>& System::Processes() { 
     vector<int> pids = LinuxParser::Pids();
     processes_.clear();

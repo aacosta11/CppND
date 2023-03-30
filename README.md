@@ -2,7 +2,9 @@
 
 Capstone project for the [Udacity C++ Nanodegree Program](https://www.udacity.com/course/c-plus-plus-nanodegree--nd213).
 
-A simple, 2D video game built with SDL2. Controlling a very well-dressed man, the player is tasked to clear the area for construction of a mall.
+A simple, 2D video game built with SDL2. 
+
+Controlling a very well-dressed man, the player is tasked to clear the area for construction of a mall.
 
 ---
 

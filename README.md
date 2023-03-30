@@ -12,7 +12,15 @@ The assets were made using OpenAI's Dall-E model.
 
 ---
 
-## Criteria met
+## Controls
+
+**WASD** - Move the player
+
+**Space** - Attack
+
+---
+
+## Rubric Points Addressed
 
 * The project demonstrates an understanding of C++ functions and control structures.
 * The project reads data from a file and process the data, or the program writes data to a file. (1.)
@@ -31,9 +39,7 @@ The assets were made using OpenAI's Dall-E model.
 
 (1.) Textures are loaded from the "assets" folder.
 
-(2.) Inside of Game::run() \[Game.cpp, line 302], SDL_Event's are polled and passed to member objects to be handled accordingly.
-
-(3.) In Game::run() \[Game.cpp, line 302], SDL_Event's are passed to member objects by reference.
+(2.)(3.) Inside of Game::run() \[Game.cpp, line 303], SDL_Event's are passed to member objects by reference.
 
 ---
 

@@ -195,10 +195,9 @@ bool Game::loadAssets()
     
     // TODO: load reset button texture
     _resetButton = std::make_unique<Button>();
-    // if (!_resetButton->loadFromFile(_gRenderer->getRendererHandle(), "../assets/reset-button.png"))
-    //     return false;
-    _resetButton->setDimensions(100, 50);
-    _resetButton->setPosition(_backdrop->getWidth() / 2 - _resetButton->getWidth() / 2, _backdrop->getHeight() / 2 - _resetButton->getHeight() / 2);
+    if (!_resetButton->loadFromFile(_gRenderer->getRendererHandle(), "../assets/reset-button.png"))
+        return false;
+    _resetButton->setPosition(_backdrop->getWidth() / 2 - _resetButton->getWidth() / 2, _backdrop->getHeight() - _resetButton->getHeight() - 50);
 
     // load player texture
     if (!loadPlayer())
@@ -289,13 +288,13 @@ void Game::handleWindowResize()
     _startButton->setPosition(_backdropPosition.x + _backdrop->getWidth() / 2 - _startButton->getWidth() / 2, _backdropPosition.y + _backdrop->getHeight() / 2 - _startButton->getHeight() / 2);
 
     // update reset button position
-    _resetButton->setPosition(_backdropPosition.x + _backdrop->getWidth() / 2 - _resetButton->getWidth() / 2, _backdropPosition.y + _backdrop->getHeight() / 2 - _resetButton->getHeight() / 2);
+    _resetButton->setPosition(_backdrop->getWidth() / 2 - _resetButton->getWidth() / 2, _backdrop->getHeight() - _resetButton->getHeight() - 50);
 }
 
 void Game::resetGame()
 {
     _player->resetToPosition(100, -_player->getHeight() - 150);
-    _tree->resetToPosition(_backdrop->getWidth() - _tree->getWidth() - 200, -_tree->getHeight() - 150);
+    _tree->resetToPosition(_backdrop->getWidth() - _tree->getWidth() - 100, -_tree->getHeight() - 150);
     _gameEnded = false;
 }
 
@@ -340,6 +339,19 @@ void Game::run()
     // set player enemies
     _player->setEnemies( { _tree.get() } );
 
+    Timer endGameTextureTimer;
+    int endGameTextureFrame = 0;
+    std::vector<SDL_Rect> endGameTextureClips 
+    {
+        { 0, 0, 369, 302 },
+        { 548, 0, 369, 302 },
+        { 1096, 0, 369, 302 },
+        { 1642, 0, 369, 302 },
+        { 2190, 0, 369, 302 },
+    };
+    Texture endGameTexture;
+    endGameTexture.loadFromFile(_gRenderer->getRendererHandle(), "../assets/mall-blueprints.png");
+
     // main loop
     _gameStarted = false;
     _gameEnded = false;
@@ -371,7 +383,11 @@ void Game::run()
         
         // handle reset
         if (woodYouLikeToReset)
+        {
             resetGame();
+            endGameTextureFrame = 0;
+            endGameTextureTimer.stop();
+        }
 
         // calculate fps
         float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
@@ -405,10 +421,27 @@ void Game::run()
 
             if ( _gameEnded )
             {
-                _resetButton->render(_gRenderer->getRendererHandle());
-                SDL_Rect rect = _resetButton->getRect();                
-                SDL_SetRenderDrawColor(_gRenderer->getRendererHandle(), 0x00, 0x00, 0x00, 0x00);
-                SDL_RenderFillRect(_gRenderer->getRendererHandle(), &rect);
+                
+                int x = _backdropPosition.x + _backdrop->getWidth() / 2 - endGameTextureClips[endGameTextureFrame].w / 2;
+                int y = _backdropPosition.y + _backdrop->getHeight() / 2 - endGameTextureClips[endGameTextureFrame].h / 2;
+                endGameTexture.render(_gRenderer->getRendererHandle(), x, y, &endGameTextureClips[endGameTextureFrame]);
+                
+                if ( endGameTextureFrame < endGameTextureClips.size() - 1 )
+                {
+                    if ( endGameTextureTimer.getTicks() > 800 )
+                    {
+                        endGameTextureTimer.start();
+                        endGameTextureFrame++;
+                    }
+                    else if ( !endGameTextureTimer.isStarted() )
+                    {
+                        endGameTextureTimer.start();
+                    }
+                }
+                else
+                {
+                    _resetButton->render(_gRenderer->getRendererHandle());
+                }
             }
         }
         else

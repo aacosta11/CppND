@@ -44,12 +44,17 @@ public:
     int getHealth();
     EntityState getCurrentState();
     std::vector<SDL_Rect> getCurrentStateClips();
+    SDL_Rect getCurrentClip();
+    int getWidth();
+    int getHeight();
     int getPosX();
     int getPosY();
     SDL_Rect getCollider();
 
     // SETTERS
     void setPosition(int posX, int posY);
+    void setHealth(int health);
+    void resetToPosition(int posX, int posY);
     void takeDamage(int damage);
     void setWorldObjects(std::vector<SDL_Rect> worldObjects);
     void setEnemies(std::vector<Entity*> enemies);
@@ -63,23 +68,17 @@ public:
 protected:
     // health
     int _health;
-
     // world objects
     std::vector<SDL_Rect> _worldObjects;
-
     // enemies
     std::vector<Entity*> _enemies;
-
     // physics
     struct XY { float x, y; } _vel, _acc;
-    
     // collision
     SDL_Rect _collider;
-
     // texture
     Texture _texture;
     SDL_Rect _spriteRect;
-
     // animation
     struct Animation { std::vector<SDL_Rect> clips; int cycles; int timeBetweenFrames; };
     std::map<EntityState, Animation> _animations;
@@ -87,7 +86,6 @@ protected:
     Timer _animationTimer;
     int _currentFrame;
     int _currentCycle;
-
     // states
     bool _isAirborne;
     bool _attackHasLanded;

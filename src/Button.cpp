@@ -59,8 +59,9 @@ void Button::render(SDL_Renderer *renderer)
 
 // EVENTS
 
-void Button::handleSDLEvent(SDL_Event &e, bool &flag)
+void Button::handleSDLEvent(SDL_Event &e, bool &flag, bool shouldBeListening)
 {
+    if (!shouldBeListening) return;
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT)
     {
         int x, y;

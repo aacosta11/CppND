@@ -11,7 +11,10 @@ Game::Game()
     _backdrop = NULL;
     _tree = NULL;
     _startButton = NULL;
+    _resetButton = NULL;
     _backdropPosition = { 0, 0 };
+    _gameStarted = false;
+    _gameEnded = false;
 }
 
 Game::~Game()
@@ -72,6 +75,7 @@ void Game::closeSDL()
     _player.reset();
     _tree.reset();
     _startButton.reset();
+    _resetButton.reset();
 
     IMG_Quit();
     SDL_Quit();
@@ -189,6 +193,13 @@ bool Game::loadAssets()
         return false;
     _startButton->setPosition(_backdrop->getWidth() / 2 - _startButton->getWidth() / 2, _backdrop->getHeight() / 2 - _startButton->getHeight() / 2);
     
+    // TODO: load reset button texture
+    _resetButton = std::make_unique<Button>();
+    // if (!_resetButton->loadFromFile(_gRenderer->getRendererHandle(), "../assets/reset-button.png"))
+    //     return false;
+    _resetButton->setDimensions(100, 50);
+    _resetButton->setPosition(_backdrop->getWidth() / 2 - _resetButton->getWidth() / 2, _backdrop->getHeight() / 2 - _resetButton->getHeight() / 2);
+
     // load player texture
     if (!loadPlayer())
         return false;
@@ -204,38 +215,46 @@ bool Game::loadAssets()
 
 void Game::updateTreeFrames() 
 {
-    if (_tree->getCurrentState() == Entity::EntityState::TAKING_DAMAGE)
-    {
-        return;
-    }
+    if (_tree->getCurrentState() == Entity::EntityState::TAKING_DAMAGE) return;
+
+    SDL_Rect currentClip = _tree->getCurrentClip();
+    auto createTakingDamageAnim = [currentClip]()->std::vector<SDL_Rect>{
+        std::vector<SDL_Rect> clips {currentClip};
+        clips.push_back( {
+            currentClip.x + 10,
+            currentClip.y,
+            currentClip.w,
+            currentClip.h
+            } 
+        );
+        clips.push_back( {
+            currentClip.x - 10,
+            currentClip.y,
+            currentClip.w,
+            currentClip.h
+            } 
+        );
+        return clips;
+    };
+
     if (_tree->getHealth() > 50)
     {
-        _tree->updateCurrentState(Entity::EntityState::IDLE);
+        if (_tree->getCurrentState() != Entity::EntityState::IDLE)
+            _tree->updateCurrentState(Entity::EntityState::IDLE);
+        _tree->addAnimation(Entity::EntityState::TAKING_DAMAGE, createTakingDamageAnim(), 3, 20);
         return;
     }
     if (_tree->getHealth() > 0)
     {
-        std::vector<SDL_Rect> clips = _tree->getCurrentStateClips();
-        clips.push_back( {
-            clips[0].x + 10,
-            clips[0].y,
-            clips[0].w,
-            clips[0].h
-            } 
-        );
-        clips.push_back( {
-            clips[0].x - 10,
-            clips[0].y,
-            clips[0].w,
-            clips[0].h
-            } 
-        );
-        _tree->addAnimation(Entity::EntityState::TAKING_DAMAGE, clips, 3, 20);
-        _tree->updateCurrentState(Entity::EntityState::DAMAGED_IDLE);
+        if (_tree->getCurrentState() != Entity::EntityState::DAMAGED_IDLE)
+            _tree->updateCurrentState(Entity::EntityState::DAMAGED_IDLE);
+        _tree->addAnimation(Entity::EntityState::TAKING_DAMAGE, createTakingDamageAnim(), 3, 20);
         return;
     }
 
-    _tree->updateCurrentState(Entity::EntityState::UNRESPONSIVE);
+    if (_tree->getCurrentState() != Entity::EntityState::UNRESPONSIVE)
+        _tree->updateCurrentState(Entity::EntityState::UNRESPONSIVE);
+    _gameEnded = true;
 }
 
 void Game::handleWindowResize()
@@ -265,6 +284,19 @@ void Game::handleWindowResize()
     _leftWall = { _backdropPosition.x, _backdropPosition.y, 20, _backdrop->getHeight() };
     _player->setWorldObjects({ _floor, _rightWall, _leftWall });
     _tree->setWorldObjects({ _floor, _rightWall, _leftWall });
+
+    // update start button position
+    _startButton->setPosition(_backdropPosition.x + _backdrop->getWidth() / 2 - _startButton->getWidth() / 2, _backdropPosition.y + _backdrop->getHeight() / 2 - _startButton->getHeight() / 2);
+
+    // update reset button position
+    _resetButton->setPosition(_backdropPosition.x + _backdrop->getWidth() / 2 - _resetButton->getWidth() / 2, _backdropPosition.y + _backdrop->getHeight() / 2 - _resetButton->getHeight() / 2);
+}
+
+void Game::resetGame()
+{
+    _player->resetToPosition(100, -_player->getHeight() - 150);
+    _tree->resetToPosition(_backdrop->getWidth() - _tree->getWidth() - 200, -_tree->getHeight() - 150);
+    _gameEnded = false;
 }
 
 // MAIN LOOP
@@ -301,19 +333,23 @@ void Game::run()
     _player->setWorldObjects( { _floor, _rightWall, _leftWall, } );
     _tree->setWorldObjects( { _floor, _rightWall, _leftWall, } );
 
+    // set player and tree to idle
     _player->updateCurrentState(Entity::EntityState::IDLE);
     _tree->updateCurrentState(Entity::EntityState::IDLE);
 
+    // set player enemies
     _player->setEnemies( { _tree.get() } );
 
     // main loop
-    bool gameStarted = false;
+    _gameStarted = false;
+    _gameEnded = false;
     bool quit = false;
     while (!quit)
     {
         capTimer.start();
 
         bool hasWindowResized = false;
+        bool woodYouLikeToReset = false;
 
         // handle events on queue
         while (SDL_PollEvent(&e) != 0)
@@ -325,12 +361,17 @@ void Game::run()
             // handle window events
             _gWindow->handleEvent(e, _gRenderer->getRendererHandle(), hasWindowResized);
             _player->handleEvent(e);
-            _startButton->handleSDLEvent(e, gameStarted);
+            _startButton->handleSDLEvent(e, _gameStarted, !_gameStarted);
+            _resetButton->handleSDLEvent(e, woodYouLikeToReset, _gameEnded);
         }
 
         // handle window resize
         if (hasWindowResized)
             handleWindowResize();
+        
+        // handle reset
+        if (woodYouLikeToReset)
+            resetGame();
 
         // calculate fps
         float avgFPS = countedFrames / (fpsTimer.getTicks() / 1000.f);
@@ -343,7 +384,7 @@ void Game::run()
 
         _backdrop->render(_gRenderer->getRendererHandle(), _backdropPosition.x, _backdropPosition.y, NULL);
         
-        if (gameStarted)
+        if (_gameStarted)
         {
             // calculate time step
             float timeStep = stepTimer.getTicks() / 1000.f;
@@ -362,16 +403,13 @@ void Game::run()
             _tree->render(_gRenderer->getRendererHandle());
             _player->render(_gRenderer->getRendererHandle());
 
-            // render collision boxes (for debugging)
-            // SDL_Rect player = _player->getCollider();
-            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &player);
-
-            // SDL_Rect tree = _tree->getCollider();
-            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &tree);
-
-            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_floor);
-            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_rightWall);
-            // SDL_RenderDrawRect(_gRenderer->getRendererHandle(), &_leftWall);
+            if ( _gameEnded )
+            {
+                _resetButton->render(_gRenderer->getRendererHandle());
+                SDL_Rect rect = _resetButton->getRect();                
+                SDL_SetRenderDrawColor(_gRenderer->getRendererHandle(), 0x00, 0x00, 0x00, 0x00);
+                SDL_RenderFillRect(_gRenderer->getRendererHandle(), &rect);
+            }
         }
         else
         {

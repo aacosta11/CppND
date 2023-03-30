@@ -1,3 +1,7 @@
+/*
+This class originates from Lazy Foo' Productions
+(http://lazyfoo.net/)
+*/
 #include "Texture.h"
 
 // CONSTRUCTORS / DESTRUCTORS
@@ -105,21 +109,6 @@ void Texture::render(SDL_Renderer *renderer, int x = 0, int y = 0, SDL_Rect *cli
     }
 
     SDL_RenderCopy(renderer, _texture, clip, &renderQuad);
-}
-
-void Texture::setColor(Uint8 red, Uint8 green, Uint8 blue)
-{
-    SDL_SetTextureColorMod(_texture, red, green, blue);
-}
-
-void Texture::setBlendMode(SDL_BlendMode blending)
-{
-    SDL_SetTextureBlendMode(_texture, blending);
-}
-
-void Texture::setAlpha(Uint8 alpha)
-{
-    SDL_SetTextureAlphaMod(_texture, alpha);
 }
 
 // GETTERS / SETTERS

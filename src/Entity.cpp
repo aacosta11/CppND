@@ -346,9 +346,15 @@ Entity::EntityState Entity::getCurrentState() { return _currentState; }
 
 std::vector<SDL_Rect> Entity::getCurrentStateClips() { return _animations[_currentState].clips; }
 
+SDL_Rect Entity::getCurrentClip() { return _animations[_currentState].clips[_currentFrame]; }
+
 int Entity::getPosX() { return _collider.x; }
 
 int Entity::getPosY() { return _collider.y; }
+
+int Entity::getWidth() { return _collider.w; }
+
+int Entity::getHeight() { return _collider.h; }
 
 SDL_Rect Entity::getCollider() { return _collider; }
 
@@ -358,6 +364,20 @@ void Entity::setPosition(int posX, int posY)
 {
     _collider.x = posX;
     _collider.y = posY;
+}
+
+void Entity::setHealth(int health) { _health = health; }
+
+void Entity::resetToPosition(int posX, int posY)
+{
+    _collider.x = posX;
+    _collider.y = posY;
+    _vel.x = 0;
+    _vel.y = 0;
+    _acc.x = 0;
+    _acc.y = 0;
+    _health = 100;
+    updateCurrentState(EntityState::IDLE);
 }
 
 void Entity::takeDamage(int damage)

@@ -42,6 +42,7 @@ public:
 
     // EVENTS
     void handleWindowResize();
+    void resetGame();
 
     // MAIN LOOP
     void run();
@@ -63,6 +64,8 @@ private:
     std::unique_ptr<PlayableEntity> _player;
     std::unique_ptr<Entity> _tree;
     std::unique_ptr<Button> _startButton;
+    std::unique_ptr<Button> _resetButton;
+    bool _gameStarted, _gameEnded;
     SDL_Rect _floor, _leftWall, _rightWall;
 
     struct xy { int x; int y; };

@@ -22,7 +22,7 @@ public:
     void render(SDL_Renderer *renderer);
 
     // EVENTS
-    void handleSDLEvent(SDL_Event &e, bool &flag);
+    void handleSDLEvent(SDL_Event &e, bool &flag, bool shouldBeListening);
 
     // GETTERS
     SDL_Rect getRect();

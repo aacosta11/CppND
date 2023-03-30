@@ -3,6 +3,10 @@
 
 #include "Texture.h"
 
+/*
+This class is from Lazy Foo' Productions
+(http://lazyfoo.net/)
+*/
 class Window
 {
 	public:

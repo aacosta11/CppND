@@ -5,6 +5,10 @@
 #include <SDL2/SDL_image.h>
 #include <string>
 
+/*
+This class originates from Lazy Foo' Productions
+(http://lazyfoo.net/)
+*/
 class Texture
 {
 public:
@@ -24,9 +28,6 @@ public:
 
 	// RENDERING
 	void render(SDL_Renderer *renderer, int x, int y, SDL_Rect *clip);
-	void setColor(Uint8 red, Uint8 green, Uint8 blue);
-	void setBlendMode(SDL_BlendMode blending);
-	void setAlpha(Uint8 alpha);
 	
 	// GETTERS / SETTERS
 	int getWidth();

@@ -61,9 +61,16 @@ vector<int> LinuxParser::Pids() {
     if (file->d_type == DT_DIR) {
       // Is every character of the name a digit?
       string filename(file->d_name);
-      if (std::all_of(filename.begin(), filename.end(), isdigit)) {
-        int pid = std::stoi(filename);
-        pids.push_back(pid);
+      if (std::all_of(filename.begin(), filename.end(), ::isdigit)) {
+        try 
+        {
+          int pid = std::stoi(filename);
+          pids.push_back(pid);
+        }
+        catch (const std::invalid_argument& e) 
+        {
+          continue;
+        }
       }
     }
   }
@@ -123,9 +130,15 @@ int LinuxParser::TotalProcesses() {
   while (std::getline(filestream, line)) {
     istringstream ss(line);
     while (ss >> key >> value) {
-      if (key == "processes" &&
-          std::all_of(value.begin(), value.end(), isdigit)) {
-        return std::stoi(value);
+      if (key == "processes") {
+        try
+        {
+          return std::stoi(value);
+        }
+        catch(const std::exception& e)
+        {
+          return 0;
+        }
       }
     }
   }
@@ -143,9 +156,15 @@ int LinuxParser::RunningProcesses() {
   while (std::getline(filestream, line)) {
     istringstream ss(line);
     while (ss >> key >> value) {
-      if (key == "procs_running" &&
-          std::all_of(value.begin(), value.end(), isdigit)) {
-        return stoi(value);
+      if (key == "procs_running") {
+        try
+        {
+          return std::stoi(value);
+        }
+        catch(const std::invalid_argument& e)
+        {
+          return 0;
+        }        
       }
     }
   }
@@ -208,15 +227,21 @@ string LinuxParser::Ram(int pid) {
   string key, vmsize_in_kb, line;
   ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
   if (!filestream.is_open()) {
-    return string();
+    return string("0.0");
   }
 
   while (getline(filestream, line)) {
     istringstream ss(line);
     while (ss >> key >> vmsize_in_kb) {
-      if (key == "VmSize:" &&
-          std::all_of(vmsize_in_kb.begin(), vmsize_in_kb.end(), isdigit)) {
-        return to_string(std::stoi(vmsize_in_kb) / 1000).substr(0, 7);
+      if (key == "VmSize:") {
+        try
+        {
+          return to_string(std::stoi(vmsize_in_kb) / 1000).substr(0, 7);
+        }
+        catch(const std::invalid_argument& e)
+        {
+          return string("0.0");
+        }        
       }
     }
   }

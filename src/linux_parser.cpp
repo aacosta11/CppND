@@ -227,7 +227,7 @@ string LinuxParser::Ram(int pid) {
   string key, vmsize_in_kb, line;
   ifstream filestream(kProcDirectory + to_string(pid) + kStatusFilename);
   if (!filestream.is_open()) {
-    return string("0.0");
+    return "0.0";
   }
 
   while (getline(filestream, line)) {
@@ -240,12 +240,12 @@ string LinuxParser::Ram(int pid) {
         }
         catch(const std::invalid_argument& e)
         {
-          return string("0.0");
+          return "0.0";
         }        
       }
     }
   }
-  return string();
+  return "0.0";
 }
 
 // Read and return the uptime of a process //

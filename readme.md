@@ -1,1 +1,0 @@
-# Udacity C++ Nanodegree
